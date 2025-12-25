@@ -1,0 +1,17 @@
+{
+  "name": "sana-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "start:all": "concurrently \"npm run start:behavior\" \"npm run start:logistics\" \"npm run start:frontend\"",
+    "start:behavior": "npm run dev --workspace=@sana/behavior-service",
+    "start:logistics": "npm run dev --workspace=@sana/logistics-service",
+    "start:frontend": "npm run dev --workspace=@sana/command-center"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

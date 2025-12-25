@@ -1,0 +1,7 @@
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "neondb", schema "public" at "ep-little-water-ad2uenv3-pooler.c-2.us-east-1.aws.neon.tech"
+Error: P1014
+
+The underlying table for model `behavior_events` does not exist.
+

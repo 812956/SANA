@@ -1,0 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@400;700;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-cyber-hub text-white font-mono overflow-hidden;
+  }
+}
+
+/* Scrollbar Hide */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Neon Glow Utilities */
+.text-neon-blue {
+    text-shadow: 0 0 5px #00F3FF, 0 0 10px #00F3FF;
+}
+.text-neon-red {
+    text-shadow: 0 0 5px #FF1F1F, 0 0 10px #FF1F1F;
+}
+.border-neon-blue {
+    box-shadow: 0 0 5px #00F3FF, inset 0 0 5px #00F3FF;
+}

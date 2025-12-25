@@ -1,0 +1,11 @@
+node_modules
+dist
+build
+.DS_Store
+.env
+.brain
+/brain
+*.log
+coverage
+.idea
+.vscode

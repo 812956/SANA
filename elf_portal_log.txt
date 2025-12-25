@@ -1,0 +1,10 @@
+
+> @sana/elf-portal@1.0.0 dev
+> vite
+
+
+  VITE v5.4.11  ready in 198 ms
+
+  ➜  Local:   http://localhost:5174/
+  ➜  Network: use --host to expose
+  ➜  press h + enter to show help
