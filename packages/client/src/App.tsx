@@ -1,29 +1,38 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Sidebar } from './components/Sidebar';
+import { SantaLayout } from './layouts/SantaLayout';
+import { ElfLayout } from './layouts/ElfLayout';
 import { InteractiveMap } from './pages/InteractiveMap';
 import { FactoryFloor } from './pages/FactoryFloor';
 import { ChildDatabase } from './pages/ChildDatabase';
+import { ElfDashboard } from './pages/elf/ElfDashboard';
+import { ElfChildrenList } from './pages/elf/ElfChildrenList';
+import { ElfChildDetail } from './pages/elf/ElfChildDetail';
+import { ElfProfile } from './pages/elf/ElfProfile';
+import { ElfLoginPage } from './pages/elf/ElfLoginPage';
 
 function App() {
   return (
     <Router>
-      <div className="flex h-screen bg-base-dark font-sans text-white overflow-hidden selection:bg-cyber-blue/30">
-        <Sidebar />
-        <main className="flex-1 relative flex flex-col h-full overflow-hidden">
-             {/* Global Grid Overlay */}
-            <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none z-0"></div>
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(18,22,28,0.8)_2px,transparent_2px),linear-gradient(90deg,rgba(18,22,28,0.8)_2px,transparent_2px)] bg-[size:40px_40px] border-cyber-blue/5 pointer-events-none z-0"></div>
-            
-            <div className="relative z-10 w-full h-full flex flex-col">
-                <Routes>
-                  <Route path="/" element={<InteractiveMap />} />
-                  <Route path="/database" element={<ChildDatabase />} />
-                  <Route path="/logistics" element={<FactoryFloor />} />
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-            </div>
-        </main>
-      </div>
+        <Routes>
+            {/* Santa Application Routes */}
+            <Route path="/" element={<SantaLayout />}>
+                <Route index element={<InteractiveMap />} />
+                <Route path="database" element={<ChildDatabase />} />
+                <Route path="logistics" element={<FactoryFloor />} />
+            </Route>
+
+            {/* Elf Dashboard Routes */}
+            <Route path="/elf" element={<ElfLayout />}>
+                 <Route index element={<Navigate to="dashboard" replace />} />
+                 <Route path="dashboard" element={<ElfDashboard />} />
+                 <Route path="children" element={<ElfChildrenList />} />
+                 <Route path="children/:id" element={<ElfChildDetail />} />
+                 <Route path="profile" element={<ElfProfile />} />
+            </Route>
+             <Route path="/elf/login" element={<ElfLoginPage />} />
+
+            <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
     </Router>
   );
 }
