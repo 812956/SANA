@@ -4,7 +4,7 @@ import { Map, Users, Factory, Rocket } from 'lucide-react';
 const NavItem = ({ to, icon: Icon, label }: { to: string, icon: any, label: string }) => (
   <NavLink 
     to={to} 
-    className={({ isActive }) => 
+    className={({ isActive }: { isActive: boolean }) => 
       `flex items-center gap-3 p-3 rounded-lg transition-all ${
         isActive 
           ? 'bg-cyber-blue/10 text-cyber-blue border border-cyber-blue/50' 

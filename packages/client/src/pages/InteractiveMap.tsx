@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, CircleMarker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useState, useRef } from 'react';
 import L from 'leaflet';
@@ -123,7 +123,7 @@ export const InteractiveMap = () => {
             });
             
             // Optimistic Update
-            setSelectedChild(prev => prev ? ({ ...prev, status, naughtyScore: status === 'NICE' ? 0 : 100 }) : null);
+            setSelectedChild((prev: any) => prev ? ({ ...prev, status, naughtyScore: status === 'NICE' ? 0 : 100 }) : null);
             refreshChildren(); // Sync with DB
             
             // Success Feedback

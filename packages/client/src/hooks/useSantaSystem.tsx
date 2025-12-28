@@ -6,7 +6,7 @@ const SOCKET_URL = 'http://localhost:3001';
 export const useSantaSystem = () => {
     const [events, setEvents] = useState<any[]>([]);
     const [latestEvent, setLatestEvent] = useState<any>(null);
-    const [stats, setStats] = useState({
+    const [stats] = useState({
         activeElves: 42,
         serverLoad: '12%',
         niceScore: 98,

@@ -1,4 +1,4 @@
-import { Activity, Battery, Package, Archive } from 'lucide-react';
+import { Battery, Package, Archive } from 'lucide-react';
 
 export const StatsPanel = ({ stats, health }: { stats: any, health: any }) => {
     return (

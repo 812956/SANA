@@ -1,5 +1,4 @@
-import React from 'react';
-import { User, Activity, MapPin, Clock } from 'lucide-react';
+import { User, MapPin, Clock } from 'lucide-react';
 
 interface Child {
     id: string;

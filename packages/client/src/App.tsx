@@ -5,7 +5,7 @@ import { InteractiveMap } from './pages/InteractiveMap';
 import { FactoryFloor } from './pages/FactoryFloor';
 import { ChildDatabase } from './pages/ChildDatabase';
 import { ElfDashboard } from './pages/elf/ElfDashboard';
-import { ElfChildrenList } from './pages/elf/ElfChildrenList';
+import { ElfChildDirectory } from './pages/elf/ElfChildDirectory'; // UPDATED
 import { ElfChildDetail } from './pages/elf/ElfChildDetail';
 import { ElfProfile } from './pages/elf/ElfProfile';
 import { ElfLoginPage } from './pages/elf/ElfLoginPage';
@@ -25,7 +25,7 @@ function App() {
             <Route path="/elf" element={<ElfLayout />}>
                  <Route index element={<Navigate to="dashboard" replace />} />
                  <Route path="dashboard" element={<ElfDashboard />} />
-                 <Route path="children" element={<ElfChildrenList />} />
+                 <Route path="children" element={<ElfChildDirectory />} /> {/* UPDATED */}
                  <Route path="children/:id" element={<ElfChildDetail />} />
                  <Route path="profile" element={<ElfProfile />} />
             </Route>
