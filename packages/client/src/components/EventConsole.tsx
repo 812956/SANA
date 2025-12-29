@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle, CheckCircle, Radio } from 'lucide-react';
 
 interface Event {
-    id: number;
+    id: string; // Changed from number to string (backend sends UUID)
     timestamp: string;
     type: 'NICE' | 'NAUGHTY';
     name: string;

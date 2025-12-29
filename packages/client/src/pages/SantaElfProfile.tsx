@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Shield, Mail, Calendar, Award, AlertTriangle, TrendingUp, UserMinus, UserPlus, Clock, CheckSquare } from 'lucide-react';
+import { ChevronLeft, Shield, Mail, Calendar, Award, AlertTriangle, UserMinus, UserPlus, Clock, CheckSquare } from 'lucide-react';
+import { FestiveLoader } from '../components/FestiveLoader';
 
 import type { Elf } from '../types';
 
@@ -56,7 +57,7 @@ export const SantaElfProfile = () => {
     };
 
     if (isLoading) {
-        return <div className="h-full flex items-center justify-center text-santa-gold animate-pulse">ACCESSING PERSONNEL RECORDS...</div>;
+        return <div className="h-full flex items-center justify-center"><FestiveLoader message="ACCESSING PERSONNEL RECORDS..." /></div>;
     }
 
     if (!elf) {

@@ -144,37 +144,46 @@ export class ElfController {
             // Get updated child for new status
             const updatedChild = await prisma.child.findUnique({ where: { id: childId } });
 
-            // 3. Award Elf Points
-            const elfPoints = 10; // 10 pts per report
-            await prisma.elf.update({
-                where: { id: elfId },
-                data: { 
-                    points: { increment: elfPoints },
-                    workLogs: {
-                        create: {
-                            action: "REPORT",
-                            description: `Submitted ${type} report for child ${child.name}`,
-                            pointsEarned: elfPoints
+            // 3. Award Elf Points (Gamification)
+            if (elfId) {
+                const elfExists = await prisma.elf.findUnique({ where: { id: elfId } });
+                if (elfExists) {
+                    const elfPoints = 10; // 10 pts per report
+                    await prisma.elf.update({
+                        where: { id: elfId },
+                        data: { 
+                            points: { increment: elfPoints },
+                            workLogs: {
+                                create: {
+                                    action: "REPORT",
+                                    description: `Submitted ${type} report for child ${child.name}`,
+                                    pointsEarned: elfPoints
+                                }
+                            }
                         }
-                    }
+                    });
+                } else {
+                    console.warn(`[ElfController] Warning: Reporter Elf ID ${elfId} not found in DB. Allocating report anonymously.`);
                 }
-            });
+            }
 
              // Check for Level Up (Simple logic: Level = Points / 100)
-            const updatedElf = await prisma.elf.findUnique({ where: { id: elfId } });
-            if (updatedElf) {
-                 const newLevel = Math.floor(updatedElf.points / 100) + 1;
-                 if (newLevel > updatedElf.level) {
-                     let newTitle = "Junior Elf";
-                     if (newLevel >= 2 && newLevel <= 3) newTitle = "Mid-Senior Elf";
-                     if (newLevel >= 4 && newLevel <= 5) newTitle = "Senior Elf";
-                     if (newLevel >= 6) newTitle = "Santa's Right Hand";
-
-                     await prisma.elf.update({
-                         where: { id: elfId },
-                         data: { level: newLevel, title: newTitle }
-                     });
-                 }
+            if (elfId) {
+                const updatedElf = await prisma.elf.findUnique({ where: { id: elfId } });
+                if (updatedElf) {
+                     const newLevel = Math.floor(updatedElf.points / 100) + 1;
+                     if (newLevel > updatedElf.level) {
+                         let newTitle = "Junior Elf";
+                         if (newLevel >= 2 && newLevel <= 3) newTitle = "Mid-Senior Elf";
+                         if (newLevel >= 4 && newLevel <= 5) newTitle = "Senior Elf";
+                         if (newLevel >= 6) newTitle = "Santa's Right Hand";
+    
+                         await prisma.elf.update({
+                             where: { id: elfId },
+                             data: { level: newLevel, title: newTitle }
+                         });
+                     }
+                }
             }
 
             // 4. Publish Kafka Event for Real-time Updates

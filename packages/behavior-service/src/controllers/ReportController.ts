@@ -18,7 +18,8 @@ export class ReportController {
             res.json(result);
         } catch (e: any) {
             console.error(e);
-            res.status(500).json({ error: "Report failed" });
+            console.error(e);
+            res.status(500).json({ error: e.message || "Report failed", stack: e.stack });
         }
     }
 }

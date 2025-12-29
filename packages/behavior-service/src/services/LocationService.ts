@@ -1,5 +1,4 @@
 
-import axios from 'axios';
 
 class LocationService {
     // Assuming simple geocoding service

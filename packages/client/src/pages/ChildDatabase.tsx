@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { FestiveLoader } from '../components/FestiveLoader';
 import { MapPin, Search, Database } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -161,7 +162,9 @@ export const ChildDatabase = () => {
 
             {/* List */}
             {loading ? (
-                <div className="flex-1 flex items-center justify-center text-santa-gold animate-pulse">Scanning Global Database...</div>
+                <div className="flex-1 flex items-center justify-center">
+                    <FestiveLoader message="Scanning Global Database..." />
+                </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-y-auto pb-8 pr-2 custom-scrollbar flex-1">
                     {filteredChildren.map((child: Child) => (

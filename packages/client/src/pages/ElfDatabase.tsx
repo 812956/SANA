@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { MapPin, Search } from 'lucide-react';
+import { FestiveLoader } from '../components/FestiveLoader';
 import { useNavigate } from 'react-router-dom';
 
 interface Child {
@@ -166,7 +167,9 @@ export const ElfDatabase = () => {
 
             {/* Grid */}
             {loading ? (
-                <div className="flex-1 flex items-center justify-center text-santa-gold animate-pulse text-xl font-christmas">Consulting the Scroll...</div>
+                <div className="flex-1 flex items-center justify-center">
+                    <FestiveLoader message="Consulting the Scroll..." />
+                </div>
             ) : filteredChildren.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center text-santa-silver font-mono">
                     No children found matching these criteria.

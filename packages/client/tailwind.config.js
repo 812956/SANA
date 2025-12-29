@@ -29,6 +29,8 @@ export default {
         orbitron: ['"Orbitron"', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'monospace'],
         santa: ['"Mountains of Christmas"', 'cursive'],
+        elf: ['"Fredericka the Great"', 'cursive'],
+        festive: ['"Snowburst One"', 'cursive'],
       },
       backgroundImage: {
         'santa-gradient': 'radial-gradient(circle at 50% 20%, #1e293b 0%, #0f1729 40%, #0a0e1a 100%)',

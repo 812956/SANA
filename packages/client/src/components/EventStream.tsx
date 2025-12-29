@@ -37,7 +37,7 @@ export const EventStream = ({ events }: { events: Event[] }) => {
                 {event.type === 'NICE' ? <Gift size={16} /> : <AlertCircle size={16} />}
               </div>
               <div className="flex flex-col">
-                <span className="text-xs opacity-70">[{new Date(event.timestamp).toLocaleTimeString()}] {event.location.toUpperCase()}</span>
+                <span className="text-xs opacity-70">[{new Date(event.timestamp).toLocaleTimeString()}] {(event.location || 'UNKNOWN LOC').toUpperCase()}</span>
                 <span>{event.description}</span>
               </div>
             </motion.div>

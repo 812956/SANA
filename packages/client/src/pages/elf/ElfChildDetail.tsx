@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapPin, Smile, Frown, SkipBack, Send, Camera } from 'lucide-react';
+import { FestiveLoader } from '../../components/FestiveLoader';
 
 export const ElfChildDetail = () => {
     const { id } = useParams();
@@ -59,7 +60,9 @@ export const ElfChildDetail = () => {
         }
     };
 
-    if (!child) return <div className="p-8 text-white">Loading child dossier...</div>;
+    if (!child) return <div className="h-full flex items-center justify-center">
+        <FestiveLoader message="Loading child dossier..." />
+    </div>;
 
     return (
         <div className="p-8 max-w-5xl mx-auto">

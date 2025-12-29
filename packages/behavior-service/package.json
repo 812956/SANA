@@ -10,6 +10,7 @@
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^5.10.0",
     "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
     "express": "^4.22.1",
     "kafkajs": "^2.2.4",
     "multer": "^2.0.2",

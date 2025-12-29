@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Shield, Star, Award, Zap, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
+import { FestiveLoader } from '../components/FestiveLoader';
 import type { Elf } from '../types';
 
 interface PaginationMeta {
@@ -131,7 +132,9 @@ export const SantaElfDirectory = () => {
             </header>
 
             {isLoading ? (
-                <div className="flex-1 flex items-center justify-center text-santa-gold animate-pulse">Scanning database...</div>
+                <div className="flex-1 flex items-center justify-center">
+                    <FestiveLoader message="Scanning database..." />
+                </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-y-auto pb-8 pr-2 custom-scrollbar flex-1">
                     {elves.map(elf => (

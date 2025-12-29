@@ -88,7 +88,7 @@ export const SantaAI = () => {
         setIsProcessing(true);
 
         try {
-            const res = await fetch('http://localhost:3000/api/ai/command', {
+            const res = await fetch('/api/ai/command', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text: userText })

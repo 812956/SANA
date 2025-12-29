@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useState, useRef } from 'react';
 import L from 'leaflet';
@@ -68,8 +68,8 @@ const MapController = ({ location }: { location: { lat: number, lng: number } | 
 };
 
 export const InteractiveMap = () => {
-    const [children, setChildren] = useState<any[]>([]);
     const { events, latestEvent } = useSantaSystem();
+    // Live Event Transient State
     const [blips, setBlips] = useState<any[]>([]);
     
     // ATOMIC STATE: One source of truth for "Who is selected"
@@ -78,39 +78,29 @@ export const InteractiveMap = () => {
     // Toast State
     const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
 
-    // Initial Load of Children
-    const refreshChildren = () => {
-        fetch('http://localhost:3001/api/children?limit=1000')
-            .then(res => res.json())
-            .then(data => {
-                if (Array.isArray(data)) setChildren(data);
-                else if (data.data && Array.isArray(data.data)) setChildren(data.data);
-            })
-            .catch(err => console.error("Failed to load children", err));
-    };
-
-    useEffect(() => {
-        refreshChildren();
-    }, []);
-
-    // Blip Effect on New Event
+    // Blip Effect & Child Status Update on New Event
     useEffect(() => {
         if (latestEvent && latestEvent.lat && latestEvent.lng) {
+            console.log('[InteractiveMap] Processing event:', latestEvent);
+            
+            // 1. Create Blip
             const blipId = Date.now();
             setBlips(prev => [...prev, { ...latestEvent, blipId }]);
-            setTimeout(() => setBlips(prev => prev.filter(b => b.blipId !== blipId)), 2000);
+            setTimeout(() => setBlips(prev => prev.filter(b => b.blipId !== blipId)), 5000); // Extended duration 5s
         }
     }, [latestEvent]);
 
     // ATOMIC INTERACTION HANDLER
+    // Directly uses the event data to set the selected child/target
     const handleEventClick = (event: any) => {
-        const child = children.find(c => c.name === event.name) || {
+        setSelectedChild({
             ...event,
-            id: event.id || 'unknown',
-            naughtyScore: event.type === 'Naughty' ? 80 : 20,
-            wishlist: 'Analyzing...'
-        };
-        setSelectedChild(child);
+            id: event.childId || event.id || 'unknown', // Fallback if ID is missing
+            lat: event.lat,
+            lng: event.lng,
+            naughtyScore: event.type === 'NAUGHTY' ? 80 : 20, // Estimate based on event
+            wishlist: 'Live Event - Analyzing...'
+        });
     };
 
     // ACTION HANDLER
@@ -133,7 +123,6 @@ export const InteractiveMap = () => {
             
             // Optimistic Update
             setSelectedChild((prev: any) => prev ? ({ ...prev, status, naughtyScore: status === 'NICE' ? 0 : 100 }) : null);
-            refreshChildren(); // Sync with DB
             
             // Success Feedback
             setToast({ 
@@ -144,7 +133,7 @@ export const InteractiveMap = () => {
 
         } catch (e) {
             console.error("Failed to update status", e);
-             setToast({ message: "SYSTEM ERROR: Update Failed", type: 'error' });
+            setToast({ message: "SYSTEM ERROR: Update Failed", type: 'error' });
         }
     };
 
@@ -159,63 +148,34 @@ export const InteractiveMap = () => {
                 {/* Controller bound to Selected Child's Location */}
                 <MapController location={selectedChild ? { lat: selectedChild.lat, lng: selectedChild.lng } : null} />
 
-                {/* TARGET LOCK: Selected Child Blinking Beacon */}
+                {/* TARGET LOCK: Selected Child (YELLOW/GOLD Persistent Marker) */}
                 {selectedChild && (
                     <Marker 
                         position={[selectedChild.lat, selectedChild.lng]}
-                        icon={selectedChild.status === 'NICE' ? greenIcon : redIcon}
-                        zIndexOffset={2000}
+                        icon={goldIcon} // USER REQ: Yellow for selected
+                        zIndexOffset={3000}
                     >
                          <Popup className="font-orbitron glass-popup" autoClose={false} closeOnClick={false}>
                             <div className="font-bold flex items-center gap-2">
                                 TARGET LOCKED
-                                <span className={`w-2 h-2 rounded-full animate-ping ${selectedChild.status === 'NICE' ? 'bg-santa-green' : 'bg-santa-red'}`} />
+                                <span className="w-2 h-2 rounded-full animate-ping bg-santa-gold" />
                             </div>
                             <div className="text-xs">{selectedChild.name}</div>
                         </Popup>
                     </Marker>
                 )}
 
-                {/* Static Children Markers */}
-                {children.map(child => (
-                    <Marker 
-                        key={child.id} 
-                        position={[child.lat, child.lng]}
-                        icon={child.status === 'NICE' ? greenIcon : redIcon}
-                        eventHandlers={{
-                            click: () => setSelectedChild(child) // Marker click also triggers atomic selection
-                        }}
-                    >
-                    </Marker>
-                ))}
-
-                {/* Active Event Blips */}
+                {/* TRANSIENT LIVE EVENTS (Green/Red Markers for 5s) */}
                 {blips.map(blip => (
-                    <CircleMarker 
+                    <Marker 
                         key={blip.blipId}
-                        center={[blip.lat, blip.lng]}
-                        pathOptions={{ 
-                            color: blip.type === 'NICE' ? '#165B33' : '#D42426',
-                            fillColor: blip.type === 'NICE' ? '#165B33' : '#D42426',
-                            fillOpacity: 0.5
-                        }}
-                        radius={20}
-                    />
-                ))}
-
-                {/* Santa Sleigh Marker */}
-                {latestEvent && latestEvent.lat && (
-                    <Marker
-                        position={[latestEvent.lat, latestEvent.lng]}
-                        icon={goldIcon}
-                        zIndexOffset={1000}
+                        position={[blip.lat, blip.lng]}
+                        icon={blip.type === 'NICE' ? greenIcon : redIcon}
+                        zIndexOffset={2000}
                     >
-                        <Popup className="font-orbitron text-santa-midnight">
-                            <div className="font-bold">SANTA'S SLEIGH</div>
-                            <div className="text-xs">Intercepting: {latestEvent.name}</div>
-                        </Popup>
+                        {/* Optional: No Popup needed for transient, just the visual marker */}
                     </Marker>
-                )}
+                ))}
             </MapContainer>
             
             {/* Legend Overlay */}
@@ -228,6 +188,7 @@ export const InteractiveMap = () => {
                     <div className="w-3 h-3 rounded-full bg-santa-red shadow-[0_0_8px_rgba(212,36,38,0.6)]"></div> Naughty List
                 </div>
             </div>
+
 
             {/* Live Event Console */}
             <EventConsole events={events} onEventClick={handleEventClick} />
