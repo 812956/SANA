@@ -49,6 +49,8 @@ model Elf {
   points    Int       @default(0)
   level     Int       @default(1)
   title     String    @default("Junior Elf")
+  department String   @default("Toy Making")
+  badges    String[]  @default([])
   lastActive DateTime @default(now())
   createdAt DateTime  @default(now())
   workLogs  WorkLog[]

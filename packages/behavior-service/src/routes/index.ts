@@ -23,6 +23,8 @@ router.post('/children/:id/status', childController.updateStatus);
 router.get('/elves', elfController.getElves);
 router.post('/elves', elfController.createElf);
 router.get('/elves/:id', elfController.getElfById);
+router.post('/elves/:id/promote', elfController.promoteElf);
+router.post('/elves/:id/terminate', elfController.terminateElf);
 
 // Elf Dashboard Routes (for Elf-specific operations)
 router.post('/elf/login', elfController.login);

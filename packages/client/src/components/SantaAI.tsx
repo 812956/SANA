@@ -123,22 +123,22 @@ export const SantaAI = () => {
                 right: 100,
                 bottom: 100,
             }}
-            className="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-auto"
+            className="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-auto font-sans"
         >
             {/* Chat Window */}
             {isOpen && (
-                <div className="mb-4 w-80 md:w-96 bg-slate-900/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl overflow-hidden flex flex-col transition-all animate-in slide-in-from-bottom-10 duration-200">
+                <div className="mb-4 w-80 md:w-96 glass-panel rounded-2xl overflow-hidden flex flex-col transition-all animate-in slide-in-from-bottom-10 duration-200 shadow-2xl">
                     {/* Header */}
-                    <div className="bg-gradient-to-r from-red-600 to-red-800 p-4 flex items-center justify-between cursor-move">
+                    <div className="bg-gradient-to-r from-santa-red to-red-900 p-4 flex items-center justify-between cursor-move">
                         <div className="flex items-center gap-2">
                             <div className="bg-white/20 p-1.5 rounded-lg">
                                 <Bot className="text-white w-5 h-5" />
                             </div>
                             <div>
-                                <h3 className="font-bold text-white text-sm">S.A.N.A.</h3>
+                                <h3 className="font-bold text-white text-sm font-santa tracking-widest">S.A.N.A.</h3>
                                 <div className="flex items-center gap-1.5">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
-                                    <span className="text-[10px] text-red-100 font-medium tracking-wide">ONLINE</span>
+                                    <span className="w-1.5 h-1.5 rounded-full bg-santa-green animate-pulse"></span>
+                                    <span className="text-[10px] text-white/90 font-medium tracking-wide">ONLINE</span>
                                 </div>
                             </div>
                         </div>
@@ -156,8 +156,8 @@ export const SantaAI = () => {
                             <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed shadow-sm ${
                                     msg.role === 'user' 
-                                        ? 'bg-blue-600 text-white rounded-br-none' 
-                                        : 'bg-slate-800 text-slate-200 rounded-bl-none border border-slate-700'
+                                        ? 'bg-santa-red text-white rounded-br-none' 
+                                        : 'bg-white/10 text-white rounded-bl-none border border-white/10'
                                 }`}>
                                     {msg.content}
                                 </div>
@@ -165,9 +165,9 @@ export const SantaAI = () => {
                         ))}
                         {isProcessing && (
                             <div className="flex justify-start">
-                                <div className="bg-slate-800 rounded-2xl rounded-bl-none px-4 py-3 border border-slate-700 flex items-center gap-2">
-                                    <Sparkles size={14} className="text-yellow-400 animate-spin" />
-                                    <span className="text-xs text-slate-400">Processing...</span>
+                                <div className="bg-white/5 rounded-2xl rounded-bl-none px-4 py-3 border border-white/10 flex items-center gap-2">
+                                    <Sparkles size={14} className="text-santa-gold animate-spin" />
+                                    <span className="text-xs text-gray-400">Processing...</span>
                                 </div>
                             </div>
                         )}
@@ -183,15 +183,15 @@ export const SantaAI = () => {
                     </div>
 
                     {/* Input */}
-                    <form onSubmit={handleSubmit} className="p-3 bg-slate-950 border-t border-white/10">
+                    <form onSubmit={handleSubmit} className="p-3 bg-black/40 border-t border-white/10">
                         <div className="relative flex items-center gap-2">
                             <button
                                 type="button"
                                 onClick={toggleListening}
                                 className={`p-2 rounded-lg transition-colors ${
                                     isListening 
-                                        ? 'bg-red-600 text-white' 
-                                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                                        ? 'bg-santa-red text-white' 
+                                        : 'bg-white/5 text-gray-400 hover:bg-white/10'
                                 }`}
                             >
                                 {isListening ? <MicOff size={16} /> : <Mic size={16} />}
@@ -201,12 +201,12 @@ export const SantaAI = () => {
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 placeholder="Ask Santa or navigate..."
-                                className="flex-1 bg-slate-900 text-white placeholder-slate-500 text-sm rounded-xl px-4 py-3 border border-slate-800 focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 outline-none transition-all"
+                                className="flex-1 bg-white/5 text-white placeholder-gray-500 text-sm rounded-xl px-4 py-3 border border-white/10 focus:border-santa-gold/50 focus:ring-1 focus:ring-santa-gold/50 outline-none transition-all"
                             />
                             <button 
                                 type="submit" 
                                 disabled={!query.trim() || isProcessing}
-                                className="p-2 bg-red-600 hover:bg-red-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="p-2 bg-santa-gold hover:bg-yellow-500 text-santa-midnight rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
                                 <Send size={16} />
                             </button>
@@ -220,8 +220,8 @@ export const SantaAI = () => {
                 onClick={() => setIsOpen(!isOpen)}
                 className={`group relative flex items-center justify-center w-14 h-14 rounded-full shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 ${
                     isOpen 
-                        ? 'bg-slate-800 text-slate-400 rotate-90' 
-                        : 'bg-gradient-to-br from-red-600 to-red-700 text-white shadow-[0_0_20px_rgba(220,38,38,0.5)]'
+                        ? 'bg-santa-surface border border-white/20 text-gray-400 rotate-90' 
+                        : 'bg-gradient-to-br from-santa-red to-red-700 text-white shadow-[0_0_20px_rgba(212,36,38,0.5)]'
                 }`}
             >
                 {isOpen ? (
@@ -229,7 +229,7 @@ export const SantaAI = () => {
                 ) : (
                     <>
                         <Bot size={28} className="relative z-10" />
-                        <span className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-20"></span>
+                        <span className="absolute inset-0 rounded-full bg-santa-red animate-ping opacity-20"></span>
                     </>
                 )}
             </button>

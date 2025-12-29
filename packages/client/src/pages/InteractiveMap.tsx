@@ -150,7 +150,7 @@ export const InteractiveMap = () => {
 
     return (
         <div className="h-full w-full relative">
-             <MapContainer center={[20, 0]} zoom={2} scrollWheelZoom={true} className="h-full w-full bg-slate-900">
+             <MapContainer center={[20, 0]} zoom={2} scrollWheelZoom={true} className="h-full w-full bg-santa-midnight/50" style={{ background: 'transparent' }}>
                 <TileLayer
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
@@ -166,10 +166,10 @@ export const InteractiveMap = () => {
                         icon={selectedChild.status === 'NICE' ? greenIcon : redIcon}
                         zIndexOffset={2000}
                     >
-                         <Popup className="font-orbitron" autoClose={false} closeOnClick={false}>
+                         <Popup className="font-orbitron glass-popup" autoClose={false} closeOnClick={false}>
                             <div className="font-bold flex items-center gap-2">
                                 TARGET LOCKED
-                                <span className={`w-2 h-2 rounded-full animate-ping ${selectedChild.status === 'NICE' ? 'bg-green-500' : 'bg-red-500'}`} />
+                                <span className={`w-2 h-2 rounded-full animate-ping ${selectedChild.status === 'NICE' ? 'bg-santa-green' : 'bg-santa-red'}`} />
                             </div>
                             <div className="text-xs">{selectedChild.name}</div>
                         </Popup>
@@ -195,8 +195,8 @@ export const InteractiveMap = () => {
                         key={blip.blipId}
                         center={[blip.lat, blip.lng]}
                         pathOptions={{ 
-                            color: blip.type === 'NICE' ? '#22c55e' : '#ef4444',
-                            fillColor: blip.type === 'NICE' ? '#22c55e' : '#ef4444',
+                            color: blip.type === 'NICE' ? '#165B33' : '#D42426',
+                            fillColor: blip.type === 'NICE' ? '#165B33' : '#D42426',
                             fillOpacity: 0.5
                         }}
                         radius={20}
@@ -210,7 +210,7 @@ export const InteractiveMap = () => {
                         icon={goldIcon}
                         zIndexOffset={1000}
                     >
-                        <Popup className="font-orbitron text-black">
+                        <Popup className="font-orbitron text-santa-midnight">
                             <div className="font-bold">SANTA'S SLEIGH</div>
                             <div className="text-xs">Intercepting: {latestEvent.name}</div>
                         </Popup>
@@ -219,13 +219,13 @@ export const InteractiveMap = () => {
             </MapContainer>
             
             {/* Legend Overlay */}
-            <div className="absolute top-4 right-4 bg-black/80 p-4 rounded border border-cyber-blue/30 backdrop-blur text-xs z-[1000] hidden md:block">
-                <h3 className="text-cyber-blue mb-2 font-bold">LEGEND</h3>
-                <div className="flex items-center gap-2 mb-1">
-                    <div className="w-3 h-3 rounded-full bg-green-500"></div> Nice List
+            <div className="absolute top-4 right-4 glass-panel p-4 rounded-xl text-xs z-[1000] hidden md:block">
+                <h3 className="text-santa-gold mb-2 font-bold font-orbitron tracking-wider">LEGEND</h3>
+                <div className="flex items-center gap-2 mb-1 text-white/80">
+                    <div className="w-3 h-3 rounded-full bg-santa-green shadow-[0_0_8px_rgba(22,91,51,0.6)]"></div> Nice List
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-500"></div> Naughty List
+                <div className="flex items-center gap-2 text-white/80">
+                    <div className="w-3 h-3 rounded-full bg-santa-red shadow-[0_0_8px_rgba(212,36,38,0.6)]"></div> Naughty List
                 </div>
             </div>
 
@@ -246,9 +246,9 @@ export const InteractiveMap = () => {
             {/* Toast Notification Layer */}
             {toast && (
                 <div className={`absolute top-24 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg border backdrop-blur-xl shadow-2xl z-[3000] flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 font-bold tracking-wide ${
-                    toast.type === 'success' ? 'bg-green-900/80 border-green-500 text-green-100' : 'bg-red-900/80 border-red-500 text-red-100'
+                    toast.type === 'success' ? 'bg-santa-green/90 border-santa-green text-white' : 'bg-santa-red/90 border-santa-red text-white'
                 }`}>
-                    {toast.type === 'success' ? <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" /> : <div className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />}
+                    {toast.type === 'success' ? <div className="w-2 h-2 rounded-full bg-white animate-pulse" /> : <div className="w-2 h-2 rounded-full bg-white animate-pulse" />}
                     {toast.message}
                 </div>
             )}

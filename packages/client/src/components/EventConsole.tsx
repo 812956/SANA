@@ -12,12 +12,12 @@ interface Event {
 
 export const EventConsole = ({ events, onEventClick }: { events: Event[], onEventClick: (e: Event) => void }) => {
     return (
-        <div className="absolute bottom-4 left-4 w-96 bg-black/80 border border-cyber-blue/30 backdrop-blur rounded overflow-hidden flex flex-col z-[1000] font-mono text-xs shadow-2xl shadow-cyber-blue/20">
+        <div className="absolute bottom-4 left-4 w-96 glass-panel rounded-xl overflow-hidden flex flex-col z-[1000] font-mono text-xs">
             {/* Header */}
-            <div className="bg-cyber-blue/10 p-2 border-b border-cyber-blue/30 flex justify-between items-center">
-                <div className="flex items-center gap-2 text-cyber-blue">
+            <div className="bg-white/5 p-3 border-b border-white/10 flex justify-between items-center">
+                <div className="flex items-center gap-2 text-santa-gold">
                     <Radio className="animate-pulse" size={14} />
-                    <span className="font-bold tracking-widest">LIVE EVENT FEED</span>
+                    <span className="font-bold tracking-widest font-orbitron">LIVE EVENT FEED</span>
                 </div>
                 <div className="text-[10px] text-gray-400">Targeting Priority: GLOBAL</div>
             </div>

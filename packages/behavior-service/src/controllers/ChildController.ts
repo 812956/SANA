@@ -5,7 +5,7 @@ import { childService } from '../services/ChildService';
 export class ChildController {
     async getChildren(req: Request, res: Response) {
         try {
-            const result = await childService.getAllChildren(); // Changed to getAllChildren based on Service restoration
+            const result = await childService.getChildren(req.query);
             res.json(result);
         } catch (e: any) {
             res.status(500).json({ error: e.message });

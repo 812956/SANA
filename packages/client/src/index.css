@@ -6,11 +6,46 @@
 
 @layer base {
   body {
-    @apply bg-cyber-hub text-white font-mono overflow-hidden;
+    @apply bg-santa-midnight text-white font-mono overflow-hidden;
+    background: radial-gradient(circle at 50% 20%, #1e293b 0%, #0f1729 40%, #0a0e1a 100%);
+    min-height: 100vh;
+    position: relative;
+  }
+  
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.5) 100%);
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  #root {
+    position: relative;
+    z-index: 2;
   }
 }
 
-/* Scrollbar Hide */
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(10, 14, 26, 0.8);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(248, 178, 41, 0.3);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(248, 178, 41, 0.5);
+  box-shadow: 0 0 10px rgba(248, 178, 41, 0.3);
+}
+
 .no-scrollbar::-webkit-scrollbar {
     display: none;
 }
@@ -19,22 +54,66 @@
     scrollbar-width: none;
 }
 
-/* Snowfall Animation */
-@keyframes snowfall {
-    0% { transform: translateY(-10vh) translateX(0); opacity: 1; }
-    100% { transform: translateY(100vh) translateX(20px); opacity: 0; }
-}
-.animate-snowfall {
-    animation: snowfall 10s linear infinite;
+/* Glass Utility Classes */
+.glass-panel {
+    @apply bg-santa-surface backdrop-blur-md border border-white/10 shadow-glass;
+    background: rgba(11, 17, 32, 0.85);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Neon Glow Utilities (Keeping for Elf/Cyber elements that might remain) */
-.text-neon-blue {
-    text-shadow: 0 0 5px #00F3FF, 0 0 10px #00F3FF;
+.glass-panel:hover {
+    @apply border-white/20;
+    transform: scale(1.01);
 }
-.text-neon-red {
-    text-shadow: 0 0 5px #FF1F1F, 0 0 10px #FF1F1F;
+
+/* Status-based Glass Variants */
+.glass-card-gold {
+    @apply glass-panel border-santa-gold/30;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), 
+                inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+                0 0 20px rgba(248, 178, 41, 0.2);
 }
-.border-neon-blue {
-    box-shadow: 0 0 5px #00F3FF, inset 0 0 5px #00F3FF;
+
+.glass-card-gold:hover {
+    @apply border-santa-gold/50 shadow-glow-gold;
 }
+
+.glass-card-green {
+    @apply glass-panel border-santa-green/30;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), 
+                inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+                0 0 20px rgba(22, 91, 51, 0.2);
+}
+
+.glass-card-green:hover {
+    @apply border-santa-green/50 shadow-glow-green;
+}
+
+.glass-card-red {
+    @apply glass-panel border-santa-red/30;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37), 
+                inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+                0 0 20px rgba(212, 36, 38, 0.2);
+}
+
+.glass-card-red:hover {
+    @apply border-santa-red/50 shadow-glow-red;
+}
+
+/* Smooth Transitions */
+.transition-smooth {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Page Transitions */
+.page-enter {
+    animation: fadeIn 0.5s ease-out forwards, slideUp 0.5s ease-out forwards;
+}
+
+/* Input Focus Glow */
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    @apply border-santa-gold ring-2 ring-santa-gold/30;
+    box-shadow: 0 0 20px rgba(248, 178, 41, 0.2);
+}
+

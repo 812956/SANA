@@ -46,8 +46,36 @@ export class ElfController {
 
     async getElves(req: Request, res: Response) {
         try {
-            const elves = await elfService.getAllElves();
-            res.json(elves);
+            const { page, limit, search, level, department } = req.query;
+            const params = {
+                page: page ? Number(page) : undefined,
+                limit: limit ? Number(limit) : undefined,
+                search: search as string,
+                level: level as string,
+                department: department as string
+            };
+            const result = await elfService.getAllElves(params);
+            res.json(result);
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    async promoteElf(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const elf = await elfService.promoteElf(id);
+            res.json(elf);
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    async terminateElf(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const elf = await elfService.terminateElf(id);
+            res.json(elf);
         } catch (error: any) {
             res.status(500).json({ error: error.message });
         }

@@ -4,11 +4,11 @@ import { Map, Users, Factory, Rocket } from 'lucide-react';
 const NavItem = ({ to, icon: Icon, label }: { to: string, icon: any, label: string }) => (
   <NavLink 
     to={to} 
-    className={({ isActive }: { isActive: boolean }) => 
-      `flex items-center gap-3 p-3 rounded-lg transition-all ${
+    className={({ isActive }) => 
+      `flex items-center gap-3 p-3 rounded-lg transition-smooth border ${
         isActive 
-          ? 'bg-cyber-blue/10 text-cyber-blue border border-cyber-blue/50' 
-          : 'text-gray-400 hover:text-white hover:bg-white/5'
+          ? 'glass-card-gold text-santa-gold' 
+          : 'text-gray-400 border-transparent hover:text-white hover:bg-white/5 hover:border-white/10 hover:scale-[1.02]'
       }`
     }
   >
@@ -19,25 +19,30 @@ const NavItem = ({ to, icon: Icon, label }: { to: string, icon: any, label: stri
 
 export const Sidebar = () => {
   return (
-    <aside className="w-64 bg-base-dark border-r border-cyber-blue/20 flex flex-col h-screen shrink-0 backdrop-blur-md bg-black/40">
-      <div className="p-6 border-b border-cyber-blue/20">
-        <h1 className="text-2xl font-orbitron font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyber-blue to-white">
+    <aside className="w-64 border-r border-white/10 flex flex-col h-screen shrink-0 glass-panel shadow-glass-lg">
+      <div className="p-6 border-b border-white/10 relative overflow-hidden">
+        {/* Decorative Glow */}
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-santa-red/10 to-transparent pointer-events-none" />
+        
+        <h1 className="text-2xl font-santa font-bold text-santa-red drop-shadow-[0_0_10px_rgba(212,36,38,0.3)] relative z-10">
             S.A.N.A
         </h1>
-        <p className="text-[10px] text-cyber-blue/60 tracking-[0.2em] mt-1">OS v2.0.4</p>
+        <p className="text-[10px] text-santa-gold/80 tracking-[0.2em] mt-1 relative z-10 font-orbitron">
+            North Pole OS v2.0.4
+        </p>
       </div>
 
-      <nav className="flex-1 p-4 space-y-2">
-        <NavItem to="/" icon={Map} label="GLOBAL VIEW" />
-        <NavItem to="/database" icon={Users} label="CHILD DATABASE" />
-        <NavItem to="/elves" icon={Users} label="ELF DIRECTORY" />
-        <NavItem to="/logistics" icon={Factory} label="FACTORY FLOOR" />
+      <nav className="flex-1 p-4 space-y-2 relative z-10">
+        <NavItem to="/" icon={Map} label="Global View" />
+        <NavItem to="/database" icon={Users} label="Child Database" />
+        <NavItem to="/elves" icon={Users} label="Elf List" />
+        <NavItem to="/logistics" icon={Factory} label="Toy Factory" />
       </nav>
 
-      <div className="p-4 border-t border-cyber-blue/20">
-        <div className="bg-cyber-red/10 border border-cyber-red/30 rounded p-3 text-xs text-cyber-red flex items-center gap-2">
-            <Rocket size={16} />
-            <span>SLEIGH STATUS: <br/> PRE-FLIGHT CHECK</span>
+      <div className="p-4 border-t border-white/10 relative z-10">
+        <div className="glass-card-green p-3 text-xs text-santa-green flex items-center gap-2">
+            <Rocket size={16} className="animate-pulse-subtle" />
+            <span className="font-orbitron">SLEIGH STATUS: <br/> PRE-FLIGHT CHECK</span>
         </div>
       </div>
     </aside>

@@ -5,10 +5,13 @@ import { InteractiveMap } from './pages/InteractiveMap';
 import { FactoryFloor } from './pages/FactoryFloor';
 import { ChildDatabase } from './pages/ChildDatabase';
 import { ElfDatabase } from './pages/ElfDatabase';
+import { SantaElfDirectory } from './pages/SantaElfDirectory';
+import { SantaChildProfile } from './pages/SantaChildProfile';
 import { ElfChildDetail } from './pages/elf/ElfChildDetail';
 import { ElfProfile } from './pages/elf/ElfProfile';
 import { ElfLoginPage } from './pages/elf/ElfLoginPage';
 import { ElfCreateChild } from './pages/elf/ElfCreateChild';
+import { SantaElfProfile } from './pages/SantaElfProfile';
 
 function App() {
   return (
@@ -18,7 +21,10 @@ function App() {
             <Route path="/" element={<SantaLayout />}>
                 <Route index element={<InteractiveMap />} />
                 <Route path="database" element={<ChildDatabase />} />
+                <Route path="children/:id" element={<SantaChildProfile />} />
                 <Route path="logistics" element={<FactoryFloor />} />
+                <Route path="elves" element={<SantaElfDirectory />} />
+                <Route path="elves/:id" element={<SantaElfProfile />} />
             </Route>
 
             {/* Elf Dashboard Routes */}
