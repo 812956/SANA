@@ -30,6 +30,7 @@ export const Sidebar = () => {
       <nav className="flex-1 p-4 space-y-2">
         <NavItem to="/" icon={Map} label="GLOBAL VIEW" />
         <NavItem to="/database" icon={Users} label="CHILD DATABASE" />
+        <NavItem to="/elves" icon={Users} label="ELF DIRECTORY" />
         <NavItem to="/logistics" icon={Factory} label="FACTORY FLOOR" />
       </nav>
 

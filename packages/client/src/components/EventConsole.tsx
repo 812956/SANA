@@ -36,22 +36,43 @@ export const EventConsole = ({ events, onEventClick }: { events: Event[], onEven
                             exit={{ opacity: 0, x: 20 }}
                             transition={{ duration: 0.3 }}
                             className={`
-                                p-2 rounded border-l-2 mb-1 cursor-pointer hover:scale-105 transition-transform
+                                p-3 rounded border-l-2 mb-2 cursor-pointer hover:border-l-4 transition-all
+                                group relative overflow-hidden
                                 ${event.type === 'NICE' 
-                                    ? 'bg-green-900/20 border-green-500 text-green-100 hover:bg-green-900/40' 
-                                    : 'bg-red-900/20 border-red-500 text-red-100 hover:bg-red-900/40'
+                                    ? 'bg-green-900/10 border-green-500 text-green-100' 
+                                    : 'bg-red-900/10 border-red-500 text-red-100'
                                 }
                             `}
                         >
-                            <div className="flex justify-between items-start mb-0.5">
-                                <span className={`font-bold text-[10px] uppercase px-1 rounded ${event.type === 'NICE' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
-                                    {event.type} INTERCEPT
+                            {/* Hover Highlight */}
+                            <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                            <div className="flex justify-between items-start mb-1">
+                                <div className="flex flex-col">
+                                    <span className="font-bold text-sm tracking-wide flex items-center gap-2">
+                                        {event.name}
+                                        <span className={`w-2 h-2 rounded-full animate-pulse ${event.type === 'NICE' ? 'bg-green-500' : 'bg-red-500'}`} />
+                                    </span>
+                                    <span className="text-[10px] text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                                         📍 {event.location}
+                                    </span>
+                                </div>
+                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
+                                    event.type === 'NICE' 
+                                    ? 'bg-green-500/20 border-green-500/30 text-green-400' 
+                                    : 'bg-red-500/20 border-red-500/30 text-red-400'
+                                }`}>
+                                    {event.type}
                                 </span>
-                                <span className="text-[9px] opacity-50">{new Date(event.timestamp).toLocaleTimeString()}</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                                {event.type === 'NICE' ? <CheckCircle size={10} /> : <AlertCircle size={10} />}
+                            
+                            <div className="flex items-center gap-2 text-[11px] opacity-80 mt-2 bg-black/20 p-1.5 rounded">
+                                {event.type === 'NICE' ? <CheckCircle size={12} className="text-green-500" /> : <AlertCircle size={12} className="text-red-500" />}
                                 <span>{event.description}</span>
+                            </div>
+
+                            <div className="absolute bottom-1 right-1 text-[8px] text-gray-600 font-mono">
+                                T-{Math.floor((Date.now() - new Date(event.timestamp).getTime()) / 1000)}s
                             </div>
                         </motion.div>
                     ))}

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Elf Profile</title>
+</head>
+<body>
+    <h1>Testing Elf Profile Page</h1>
+    <div id="result"></div>
+    
+    <script>
+        // Simulate what the Elf Profile component does
+        const stored = localStorage.getItem('elf_user');
+        const resultDiv = document.getElementById('result');
+        
+        if (!stored) {
+            resultDiv.innerHTML = '<p style="color: red;">ERROR: No elf_user in localStorage</p>';
+            resultDiv.innerHTML += '<p>Please login first at <a href="/elf/login">/elf/login</a></p>';
+        } else {
+            const user = JSON.parse(stored);
+            resultDiv.innerHTML = `<p>Found user in localStorage:</p><pre>${JSON.stringify(user, null, 2)}</pre>`;
+            
+            // Try to fetch profile
+            fetch(`http://localhost:3001/api/elf/profile/${user.id}`)
+                .then(res => res.json())
+                .then(data => {
+                    resultDiv.innerHTML += `<p style="color: green;">✅ API Response successful:</p><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                })
+                .catch(err => {
+                    resultDiv.innerHTML += `<p style="color: red;">❌ API Error: ${err.message}</p>`;
+                });
+        }
+    </script>
+</body>
+</html>

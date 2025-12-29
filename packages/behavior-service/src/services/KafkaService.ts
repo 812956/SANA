@@ -33,14 +33,53 @@ class KafkaService {
             await this.consumer.connect();
             this.isConnected = true;
             console.log("Kafka Connected Successfully");
+            
+            // Start consuming events and emit to Socket.IO
+            await this.startConsuming();
         } catch (e) {
             console.warn("Kafka Connection Failed (running in offline mode):", e);
         }
     }
 
+    private async startConsuming() {
+        if (!this.isConnected) return;
+        
+        try {
+            await this.consumer.subscribe({ topic: 'sana-events', fromBeginning: false });
+            
+            await this.consumer.run({
+                eachMessage: async ({ topic, partition, message }) => {
+                    const value = message.value?.toString();
+                    if (value) {
+                        try {
+                            const event = JSON.parse(value);
+                            console.log('[Kafka Consumer] Received event:', event);
+                            
+                            // Emit to all connected Socket.IO clients
+                            if (this.io) {
+                                this.io.emit('new-event', event);
+                                console.log('[Socket.IO] Broadcasted new-event to all clients');
+                            }
+                        } catch (e) {
+                            console.error("Error parsing Kafka message", e);
+                        }
+                    }
+                },
+            });
+            
+            console.log('[Kafka Consumer] Started consuming sana-events topic');
+        } catch (e) {
+            console.error('[Kafka Consumer] Failed to start consuming:', e);
+        }
+    }
+
     async sendEvent(event: any) {
         if (!this.isConnected) {
-            console.warn("Kafka not connected, skipping event send (or using fallback if implemented elsewhere)");
+            console.warn("Kafka not connected, emitting directly via Socket.IO as fallback");
+            // Fallback: emit directly to Socket.IO if Kafka is down
+            if (this.io) {
+                this.io.emit('new-event', event);
+            }
             return; 
         }
 
@@ -51,9 +90,13 @@ class KafkaService {
                     { value: JSON.stringify(event) }
                 ]
             });
+            console.log('[Kafka Producer] Event sent to sana-events topic');
         } catch (e) {
             console.error("Failed to send Kafka event", e);
-            throw e;
+            // Fallback: emit directly to Socket.IO
+            if (this.io) {
+                this.io.emit('new-event', event);
+            }
         }
     }
 

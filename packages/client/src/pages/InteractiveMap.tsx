@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, CircleMarker, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, CircleMarker, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useState, useRef } from 'react';
 import L from 'leaflet';
@@ -35,6 +35,15 @@ const redIcon = new L.Icon({
     shadowSize: [41, 41]
 });
 
+const goldIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-gold.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+});
+
 
 // Atomic Map Controller
 // listents to selectedChild and zooms instantly
@@ -47,7 +56,7 @@ const MapController = ({ location }: { location: { lat: number, lng: number } | 
         if (location) {
             // Only fly if location actually changed
             if (!prevLoc.current || prevLoc.current.lat !== location.lat || prevLoc.current.lng !== location.lng) {
-                map.flyTo([location.lat, location.lng], 13, {
+                map.flyTo([location.lat, location.lng], 16, {
                     animate: true,
                     duration: 1.5 
                 });
@@ -150,6 +159,23 @@ export const InteractiveMap = () => {
                 {/* Controller bound to Selected Child's Location */}
                 <MapController location={selectedChild ? { lat: selectedChild.lat, lng: selectedChild.lng } : null} />
 
+                {/* TARGET LOCK: Selected Child Blinking Beacon */}
+                {selectedChild && (
+                    <Marker 
+                        position={[selectedChild.lat, selectedChild.lng]}
+                        icon={selectedChild.status === 'NICE' ? greenIcon : redIcon}
+                        zIndexOffset={2000}
+                    >
+                         <Popup className="font-orbitron" autoClose={false} closeOnClick={false}>
+                            <div className="font-bold flex items-center gap-2">
+                                TARGET LOCKED
+                                <span className={`w-2 h-2 rounded-full animate-ping ${selectedChild.status === 'NICE' ? 'bg-green-500' : 'bg-red-500'}`} />
+                            </div>
+                            <div className="text-xs">{selectedChild.name}</div>
+                        </Popup>
+                    </Marker>
+                )}
+
                 {/* Static Children Markers */}
                 {children.map(child => (
                     <Marker 
@@ -176,6 +202,20 @@ export const InteractiveMap = () => {
                         radius={20}
                     />
                 ))}
+
+                {/* Santa Sleigh Marker */}
+                {latestEvent && latestEvent.lat && (
+                    <Marker
+                        position={[latestEvent.lat, latestEvent.lng]}
+                        icon={goldIcon}
+                        zIndexOffset={1000}
+                    >
+                        <Popup className="font-orbitron text-black">
+                            <div className="font-bold">SANTA'S SLEIGH</div>
+                            <div className="text-xs">Intercepting: {latestEvent.name}</div>
+                        </Popup>
+                    </Marker>
+                )}
             </MapContainer>
             
             {/* Legend Overlay */}

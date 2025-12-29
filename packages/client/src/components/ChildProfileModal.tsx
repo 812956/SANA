@@ -1,4 +1,4 @@
-import { X, Check, AlertTriangle, Gift, History } from 'lucide-react';
+import { X, AlertTriangle, Gift, Ban, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Child {
@@ -7,7 +7,7 @@ interface Child {
     city: string;
     age: number;
     status: 'NICE' | 'NAUGHTY';
-    naughtyScore: number;
+    behaviorScore: number;
     wishlist: string;
     img?: string;
 }
@@ -15,8 +15,8 @@ interface Child {
 interface Props {
     child: Child | null;
     onClose: () => void;
-    onApprove: () => void;
-    onReview: () => void;
+    onApprove: () => void; // Mark Nice
+    onReview: () => void;  // Mark Naughty
 }
 
 export const ChildProfileModal = ({ child, onClose, onApprove, onReview }: Props) => {
@@ -56,12 +56,12 @@ export const ChildProfileModal = ({ child, onClose, onApprove, onReview }: Props
                             <span className="text-xs text-cyber-blue flex items-center gap-1">
                                 <AlertTriangle size={12} /> BEHAVIOR SCORE
                             </span>
-                            <span className="font-mono text-xl font-bold">{child.naughtyScore}%</span>
+                            <span className="font-mono text-xl font-bold">{child.behaviorScore}%</span>
                         </div>
                         <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
                             <div 
                                 className={`h-full ${child.status === 'NICE' ? 'bg-green-500' : 'bg-red-500'}`} 
-                                style={{ width: `${child.naughtyScore}%` }}
+                                style={{ width: `${child.behaviorScore}%` }}
                             />
                         </div>
                     </div>
@@ -71,7 +71,26 @@ export const ChildProfileModal = ({ child, onClose, onApprove, onReview }: Props
                         <div className="text-[10px] text-gray-500 font-bold tracking-wider">REQUESTED ITEM</div>
                         <div className="flex items-center gap-3 text-sm p-2 bg-cyber-blue/5 rounded border border-cyber-blue/20 text-cyber-blue">
                             <Gift size={16} />
-                            {child.wishlist}
+                            {child.wishlist || "None recorded"}
+                        </div>
+                    </div>
+
+                    {/* Decision UI */}
+                     <div className="bg-white/5 p-3 rounded-lg border border-white/10">
+                        <div className="text-[10px] text-gray-400 font-bold tracking-wider mb-2 text-center">SANTA OVERRIDE PROTOCOL</div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button 
+                                onClick={() => { onApprove(); onClose(); }}
+                                className="bg-green-600/20 hover:bg-green-600/40 text-green-400 border border-green-600/50 p-2 rounded text-xs font-bold transition flex justify-center items-center gap-2"
+                            >
+                                <Heart size={14} /> MARK NICE
+                            </button>
+                            <button 
+                                onClick={() => { onReview(); onClose(); }}
+                                className="bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-600/50 p-2 rounded text-xs font-bold transition flex justify-center items-center gap-2"
+                            >
+                                 <Ban size={14} /> MARK NAUGHTY
+                            </button>
                         </div>
                     </div>
 
@@ -83,29 +102,9 @@ export const ChildProfileModal = ({ child, onClose, onApprove, onReview }: Props
                                 <span className="opacity-50">10:42</span>
                                 <span>Detected in school zone</span>
                             </div>
-                            <div className="flex gap-2">
-                                <span className="opacity-50">09:15</span>
-                                <span>Shared lunch (Positive)</span>
-                            </div>
                          </div>
                     </div>
 
-                </div>
-
-                {/* Actions */}
-                <div className="p-4 border-t border-white/10 grid grid-cols-2 gap-2">
-                    <button 
-                        onClick={() => { onApprove(); onClose(); }}
-                        className="bg-green-600/20 hover:bg-green-600/40 text-green-400 border border-green-600/50 p-2 rounded text-xs font-bold transition flex justify-center items-center gap-2"
-                    >
-                        <Check size={14} /> APPROVE
-                    </button>
-                    <button 
-                        onClick={() => { onReview(); onClose(); }}
-                        className="bg-red-600/20 hover:bg-red-600/40 text-red-400 border border-red-600/50 p-2 rounded text-xs font-bold transition flex justify-center items-center gap-2"
-                    >
-                         <History size={14} /> REVIEW
-                    </button>
                 </div>
             </motion.div>
         </AnimatePresence>

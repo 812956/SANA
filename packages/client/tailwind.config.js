@@ -14,11 +14,19 @@ export default {
           blue: '#00F3FF',
           dark: '#0a0a1f',
           glass: 'rgba(0, 243, 255, 0.1)',
+        },
+        // Santa Theme Palette
+        santa: {
+            red: '#D42426',
+            green: '#165B33',
+            gold: '#F8B229',
+            midnight: '#0B1120', // Deep Navy
         }
       },
       fontFamily: {
         orbitron: ['"Orbitron"', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'monospace'],
+        santa: ['"Mountains of Christmas"', 'cursive'],
       },
       animation: {
         'spin-slow': 'spin 10s linear infinite',

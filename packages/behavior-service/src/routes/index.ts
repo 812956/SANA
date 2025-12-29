@@ -24,6 +24,13 @@ router.get('/elves', elfController.getElves);
 router.post('/elves', elfController.createElf);
 router.get('/elves/:id', elfController.getElfById);
 
+// Elf Dashboard Routes (for Elf-specific operations)
+router.post('/elf/login', elfController.login);
+router.get('/elf/profile/:id', elfController.getProfile);
+router.get('/elf/children', elfController.getChildren);
+router.get('/elf/children/:id', elfController.getChild);
+router.post('/elf/report', elfController.submitReport);
+
 // Auth Routes
 router.post('/auth/login', authController.login);
 

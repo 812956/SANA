@@ -1,5 +1,7 @@
+
+
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
-import { Gift, User, LogOut, Bell } from 'lucide-react';
+import { Gift, User, LogOut, UserPlus } from 'lucide-react';
 
 export const ElfLayout = () => {
   const navigate = useNavigate();
@@ -19,13 +21,13 @@ export const ElfLayout = () => {
              </div>
 
              <nav className="flex-1 p-4 space-y-2">
-                <NavLink to="/elf/dashboard" className={({isActive}: {isActive: boolean}) => `flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive ? 'bg-red-600/10 text-red-500 border border-red-600/20' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}>
-                    <Bell size={20} />
-                    <span className="font-medium">Dashboard</span>
-                </NavLink>
                 <NavLink to="/elf/children" className={({isActive}: {isActive: boolean}) => `flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive ? 'bg-green-600/10 text-green-500 border border-green-600/20' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}>
                     <User size={20} />
                     <span className="font-medium">Children List</span>
+                </NavLink>
+                <NavLink to="/elf/create-child" className={({isActive}: {isActive: boolean}) => `flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive ? 'bg-blue-600/10 text-blue-500 border border-blue-600/20' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}>
+                    <UserPlus size={20} />
+                    <span className="font-medium">Create Child</span>
                 </NavLink>
                 <NavLink to="/elf/profile" className={({isActive}: {isActive: boolean}) => `flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${isActive ? 'bg-amber-600/10 text-amber-500 border border-amber-600/20' : 'text-slate-400 hover:bg-slate-900 hover:text-white'}`}>
                     <User size={20} />

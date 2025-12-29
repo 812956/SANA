@@ -4,11 +4,11 @@ import { ElfLayout } from './layouts/ElfLayout';
 import { InteractiveMap } from './pages/InteractiveMap';
 import { FactoryFloor } from './pages/FactoryFloor';
 import { ChildDatabase } from './pages/ChildDatabase';
-import { ElfDashboard } from './pages/elf/ElfDashboard';
-import { ElfChildDirectory } from './pages/elf/ElfChildDirectory'; // UPDATED
+import { ElfDatabase } from './pages/ElfDatabase';
 import { ElfChildDetail } from './pages/elf/ElfChildDetail';
 import { ElfProfile } from './pages/elf/ElfProfile';
 import { ElfLoginPage } from './pages/elf/ElfLoginPage';
+import { ElfCreateChild } from './pages/elf/ElfCreateChild';
 
 function App() {
   return (
@@ -23,9 +23,9 @@ function App() {
 
             {/* Elf Dashboard Routes */}
             <Route path="/elf" element={<ElfLayout />}>
-                 <Route index element={<Navigate to="dashboard" replace />} />
-                 <Route path="dashboard" element={<ElfDashboard />} />
-                 <Route path="children" element={<ElfChildDirectory />} /> {/* UPDATED */}
+                 <Route index element={<Navigate to="children" replace />} />
+                 <Route path="create-child" element={<ElfCreateChild />} />
+                 <Route path="children" element={<ElfDatabase />} />
                  <Route path="children/:id" element={<ElfChildDetail />} />
                  <Route path="profile" element={<ElfProfile />} />
             </Route>

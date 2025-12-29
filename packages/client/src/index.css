@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@400;700;900&family=Mountains+of+Christmas:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -19,7 +19,16 @@
     scrollbar-width: none;
 }
 
-/* Neon Glow Utilities */
+/* Snowfall Animation */
+@keyframes snowfall {
+    0% { transform: translateY(-10vh) translateX(0); opacity: 1; }
+    100% { transform: translateY(100vh) translateX(20px); opacity: 0; }
+}
+.animate-snowfall {
+    animation: snowfall 10s linear infinite;
+}
+
+/* Neon Glow Utilities (Keeping for Elf/Cyber elements that might remain) */
 .text-neon-blue {
     text-shadow: 0 0 5px #00F3FF, 0 0 10px #00F3FF;
 }
