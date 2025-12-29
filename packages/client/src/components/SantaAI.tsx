@@ -9,7 +9,10 @@ interface AIResponse {
     action?: string | null;
 }
 
+import { useAlert } from '../context/AlertContext';
+
 export const SantaAI = () => {
+    const { showAlert } = useAlert();
     const [isOpen, setIsOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
@@ -65,7 +68,11 @@ export const SantaAI = () => {
 
     const toggleListening = () => {
         if (!recognitionRef.current) {
-            alert('Speech recognition is not supported in your browser.');
+            showAlert({
+                title: 'SYSTEM ERROR',
+                message: 'Speech recognition module not detected in this browser interface.',
+                type: 'error'
+            });
             return;
         }
 

@@ -13,13 +13,25 @@ export class FactoryController {
         res.json({ success: true });
     }
 
-    approveOrder(req: Request, res: Response) {
+    async approveOrder(req: Request, res: Response) {
         try {
             const result = factoryService.approveOrder();
             res.json(result);
         } catch (e: any) {
             res.status(400).json({ error: e.message });
         }
+    }
+
+    async clockIn(req: Request, res: Response) {
+        const { elfId } = req.body;
+        if (!elfId) return res.status(400).json({ error: 'elfId required' });
+        res.json(factoryService.clockIn(elfId));
+    }
+
+    async clockOut(req: Request, res: Response) {
+        const { elfId } = req.body;
+        if (!elfId) return res.status(400).json({ error: 'elfId required' });
+        res.json(factoryService.clockOut(elfId));
     }
 }
 

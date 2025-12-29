@@ -3,7 +3,7 @@ import io from 'socket.io-client';
 import type { SantaSystemStats } from '../types';
 
 const SOCKET_URL = 'http://localhost:3001';
-const API_URL = 'http://localhost:3002/api/factory/stats';
+const API_URL = 'http://localhost:3002/api/stats';
 
 export const useSantaSystem = () => {
     const [events, setEvents] = useState<any[]>([]);
@@ -13,6 +13,20 @@ export const useSantaSystem = () => {
     const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
+        // Fetch Initial Events
+        const fetchInitialEvents = async () => {
+             try {
+                const res = await fetch(`${SOCKET_URL}/api/events/recent`);
+                if (res.ok) {
+                    const data = await res.json();
+                    setEvents(data);
+                }
+             } catch (e) {
+                console.error("Failed to fetch recent events", e);
+             }
+        };
+        fetchInitialEvents();
+
         // Socket connection for events
         const socket = io(SOCKET_URL, {
             transports: ['websocket', 'polling'], // Prioritize websocket
@@ -39,7 +53,11 @@ export const useSantaSystem = () => {
         socket.on('new-event', (event: any) => {
             console.log('🎁 [Client] Received new-event:', event);
             setLatestEvent(event);
-            setEvents(prev => [event, ...prev].slice(0, 50)); // Keep last 50
+            setEvents(prev => {
+                // Prevent duplicates if the event was just fetched via API
+                if (prev.some(e => e.id === event.id)) return prev;
+                return [event, ...prev].slice(0, 50);
+            }); 
         });
 
         socket.on('heartbeat', (data: any) => {
@@ -57,23 +75,19 @@ export const useSantaSystem = () => {
     }, []);
 
     // Polling for Factory Stats
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const res = await fetch(API_URL);
-                if (res.ok) {
-                    const data = await res.json();
-                    setStats({
-                        ...data,
-                        serverLoad: '12%', // Hardcoded for now
-                        niceScore: 98 // Hardcoded for now
-                    });
-                }
-            } catch (error) {
-                console.error("Failed to fetch factory stats:", error);
+    const fetchStats = async () => {
+        try {
+            const res = await fetch(API_URL);
+            if (res.ok) {
+                const data = await res.json();
+                setStats(data);
             }
-        };
+        } catch (error) {
+            console.error("Failed to fetch factory stats:", error);
+        }
+    };
 
+    useEffect(() => {
         fetchStats();
         const interval = setInterval(fetchStats, 1000); 
 
@@ -84,6 +98,7 @@ export const useSantaSystem = () => {
         events,
         latestEvent,
         stats,
-        isConnected
+        isConnected,
+        refresh: fetchStats
     };
 };

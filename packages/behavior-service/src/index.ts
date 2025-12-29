@@ -23,6 +23,10 @@ const io = new Server(server, {
 setupSocket(io);
 kafkaService.setSocketServer(io);
 
+// Import authService after io is created
+import { authService } from './services/AuthService.js';
+authService.setSocketServer(io);
+
 // Start Server
 server.listen(ENV.PORT, async () => {
     console.log(`[Behavior Service] Server running on port ${ENV.PORT}`);

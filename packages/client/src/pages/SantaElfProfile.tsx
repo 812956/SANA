@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Shield, Mail, Calendar, Award, AlertTriangle, UserMinus, UserPlus, Clock, CheckSquare } from 'lucide-react';
+import { ChevronLeft, Shield, Mail, Calendar, Award, AlertTriangle, UserMinus, UserPlus, Clock, Lock, CheckSquare } from 'lucide-react';
 import { FestiveLoader } from '../components/FestiveLoader';
-
+import { useAlert } from '../context/AlertContext';
 import type { Elf } from '../types';
 
 export const SantaElfProfile = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { showAlert } = useAlert();
     const [elf, setElf] = useState<Elf | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -34,7 +35,11 @@ export const SantaElfProfile = () => {
         try {
             const res = await fetch(`http://localhost:3001/api/elves/${id}/promote`, { method: 'POST' });
             if (res.ok) {
-                alert(`SUCCESS: ${elf?.name} has been promoted!`);
+                showAlert({
+                    title: 'PROMOTION APPROVED',
+                    message: `SUCCESS: ${elf?.name} has been promoted!`,
+                    type: 'success'
+                });
                 // Refresh
                 const updated = await res.json();
                 setElf(prev => prev ? ({ ...prev, ...updated }) : prev);
@@ -45,15 +50,26 @@ export const SantaElfProfile = () => {
     };
 
     const handleTerminate = async () => {
-        if (confirm(`WARNING: Are you sure you want to TERMINATE ${elf?.name}? This action cannot be undone.`)) {
-            try {
-                const res = await fetch(`http://localhost:3001/api/elves/${id}/terminate`, { method: 'POST' });
-                if (res.ok) {
-                    alert(`${elf?.name} has been TERMINATED.`);
-                    navigate('/elves');
-                }
-            } catch (e) { console.error(e); }
-        }
+        showAlert({
+            title: 'CONFIRM TERMINATION',
+            message: `WARNING: Are you sure you want to TERMINATE ${elf?.name}? This action cannot be undone.`,
+            type: 'confirm',
+            confirmText: 'TERMINATE',
+            cancelText: 'ABORT',
+            onAcknowledge: async () => {
+                try {
+                    const res = await fetch(`http://localhost:3001/api/elves/${id}/terminate`, { method: 'POST' });
+                    if (res.ok) {
+                        showAlert({
+                            title: 'TERMINATION COMPLETE',
+                            message: `${elf?.name} has been TERMINATED.`,
+                            type: 'error',
+                            onAcknowledge: () => navigate('/elves')
+                        });
+                    }
+                } catch (e) { console.error(e); }
+            }
+        });
     };
 
     if (isLoading) {
@@ -68,143 +84,230 @@ export const SantaElfProfile = () => {
         </div>;
     }
 
+    const RANKS = [
+        { level: 1, title: 'Apprentice Elf', points: 0 },
+        { level: 2, title: 'Junior Elf', points: 100 },
+        { level: 3, title: 'Mid-Senior Elf', points: 500 },
+        { level: 4, title: 'Senior Elf', points: 1000 },
+        { level: 5, title: 'Master Elf', points: 2000 },
+        { level: 6, title: 'Elder Elf', points: 5000 },
+    ];
+
+    const nextRank = RANKS.find(r => r.points > (elf.points || 0)) || { points: 'MAX' };
+
     return (
-        <div className="h-full flex flex-col p-8 overflow-y-auto custom-scrollbar">
-            {/* Header / Nav */}
-            <div className="flex items-center gap-4 mb-8">
-                <button 
-                    onClick={() => navigate('/elves')}
-                    className="p-2 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-                >
-                    <ChevronLeft size={24} />
-                </button>
-                <div>
-                    <h1 className="text-sm font-mono text-gray-500 tracking-widest">PERSONNEL FILE // {elf.id}</h1>
-                </div>
-            </div>
+        <div className="p-8 max-w-7xl mx-auto relative h-full overflow-y-auto custom-scrollbar">
+             {/* Nav */}
+             <button 
+                onClick={() => navigate('/elves')}
+                className="mb-6 flex items-center gap-2 text-gray-400 hover:text-white transition-colors group"
+            >
+                <ChevronLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+                <span className="font-mono text-sm tracking-wider">RETURN TO DIRECTORY</span>
+            </button>
 
-            {/* Main Profile Card */}
-            <div className="grid grid-cols-3 gap-8 mb-8">
-                {/* ID Card */}
-                <div className="col-span-1 glass-panel rounded-2xl p-8 flex flex-col items-center text-center shadow-2xl relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-santa-red via-santa-gold to-santa-green" />
-                    
-                    <div className="w-32 h-32 bg-white/5 rounded-full flex items-center justify-center text-6xl mb-6 shadow-[0_0_30px_rgba(255,255,255,0.1)] border border-white/10 ring-1 ring-white/20 overflow-hidden">
-                        {elf.avatarUrl?.startsWith('http') ? <img src={elf.avatarUrl} className="w-full h-full object-cover" /> : elf.avatarUrl || '🧝'}
-                    </div>
-                    
-                    <h1 className="text-3xl font-santa text-white mb-2 tracking-wide">{elf.name}</h1>
-                    <div className="px-4 py-1 bg-white/5 rounded-full text-xs font-bold text-santa-gold tracking-widest uppercase mb-6 border border-santa-gold/20 shadow-glow-gold">
-                        {elf.level}
-                    </div>
-
-                    <div className="w-full space-y-4 text-left">
-                        <div className="flex items-center gap-3 text-gray-300 text-sm p-4 rounded-xl bg-black/20 border border-white/5">
-                            <Shield size={16} className="text-blue-400" />
-                            <div>
-                                <p className="text-[10px] uppercase tracking-wider opacity-50 font-orbitron">Department</p>
-                                <p className="text-white font-mono">{elf.department}</p>
-                            </div>
+             <div className="glass-panel rounded-3xl overflow-hidden mb-8 shadow-2xl border border-white/10">
+                 {/* Banner */}
+                 <div className="h-40 bg-gradient-to-r from-santa-red via-santa-midnight to-santa-green relative">
+                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-30"></div>
+                     <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60"></div>
+                 </div>
+                 
+                 <div className="px-8 pb-8 relative flex flex-col md:flex-row items-end gap-6 -mt-16">
+                     <div className="relative">
+                        <div className="w-32 h-32 rounded-3xl bg-santa-midnight border-4 border-santa-midnight shadow-2xl overflow-hidden relative group">
+                             {elf.avatarUrl?.startsWith('http') ? (
+                                <img src={elf.avatarUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="Avatar" />
+                             ) : (
+                                <div className="w-full h-full flex items-center justify-center text-6xl">🧝</div>
+                             )}
                         </div>
-                        <div className="flex items-center gap-3 text-gray-300 text-sm p-4 rounded-xl bg-black/20 border border-white/5">
-                            <Mail size={16} className="text-purple-400" />
-                            <div>
-                                <p className="text-[10px] uppercase tracking-wider opacity-50 font-orbitron">Secure Comms</p>
-                                <p className="text-white font-mono">{elf.email}</p>
-                            </div>
+                        <div className="absolute -bottom-2 -right-2 bg-santa-gold text-santa-midnight text-xs font-bold px-2 py-1 rounded-lg border-2 border-santa-midnight shadow-lg">
+                            LVL {elf.level}
                         </div>
-                         <div className="flex items-center gap-3 text-gray-300 text-sm p-4 rounded-xl bg-black/20 border border-white/5">
-                            <Calendar size={16} className="text-green-400" />
-                            <div>
-                                <p className="text-[10px] uppercase tracking-wider opacity-50 font-orbitron">Service Start</p>
-                                <p className="text-white font-mono">{elf.joinedDate}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Stats & Actions */}
-                <div className="col-span-2 space-y-6">
-                    {/* Key Stats */}
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-santa-midnight/50 border border-white/10 p-6 rounded-xl relative overflow-hidden group">
-                            <h3 className="text-gray-400 text-xs font-bold tracking-widest uppercase mb-2">Performance Score</h3>
-                            <div className="text-4xl font-bold text-santa-gold">{(elf.points || 0).toLocaleString()}</div>
-                        </div>
-                        
-
-
-                         <div className="bg-santa-midnight/50 border border-white/10 p-6 rounded-xl">
-                            <h3 className="text-gray-400 text-xs font-bold tracking-widest uppercase mb-2">Badges</h3>
-                            <div className="flex flex-wrap gap-2">
-                                {(elf.badges || []).map((badge, i) => (
-                                    <span key={i} className="text-[10px] bg-yellow-500/20 text-yellow-200 border border-yellow-500/30 px-2 py-1 rounded" title={badge}>
-                                        {badge}
+                     </div>
+                     
+                     <div className="flex-1 pb-2">
+                         <div className="flex flex-wrap items-start justify-between gap-4">
+                             <div>
+                                 <h1 className="text-4xl font-santa font-bold text-white tracking-wide drop-shadow-lg mb-2">{elf.name}</h1>
+                                 <div className="flex flex-wrap items-center gap-3">
+                                    <span className={`px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wide font-orbitron border backdrop-blur-md ${
+                                        elf.level >= 5 ? 'bg-santa-gold/20 text-santa-gold border-santa-gold/30 shadow-glow-gold' : 
+                                        elf.level >= 3 ? 'bg-blue-400/20 text-blue-400 border-blue-400/30' :
+                                        'bg-gray-400/20 text-gray-300 border-gray-400/30'
+                                    }`}>
+                                        {elf.title || 'Elf Unit'}
                                     </span>
-                                ))}
-                                {(!elf.badges || elf.badges.length === 0) && <span className="text-gray-600 text-xs italic">No badges earned yet</span>}
-                            </div>
-                        </div>
-                    </div>
+                                    <span className="text-white/60 text-sm font-mono flex items-center gap-2 px-3 py-1 rounded-lg bg-black/20 border border-white/5">
+                                        <Shield size={12} /> {elf.id}
+                                    </span>
+                                 </div>
+                             </div>
+                             
+                             <div className="text-right bg-black/20 p-3 rounded-xl border border-white/5 backdrop-blur-sm">
+                                 <div className="text-3xl font-bold text-santa-gold font-mono tracking-tighter shadow-glow-gold-text">{(elf.points || 0).toLocaleString()}</div>
+                                 <div className="text-[10px] text-white/40 uppercase tracking-widest font-orbitron">Performance Score</div>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+             </div>
 
-                    {/* Actions Panel */}
-                    <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-                        <h3 className="text-white font-santa text-xl mb-4 flex items-center gap-2">
-                            <Shield size={20} className="text-blue-400" /> ADMINISTRATIVE ACTIONS
-                        </h3>
-                        <div className="flex items-center gap-4">
-                            <button 
-                                onClick={handlePromote}
-                                className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3 px-4 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors shadow-lg shadow-blue-900/20"
-                            >
-                                <UserPlus size={18} /> PROMOTE UNIT
-                            </button>
-                            <button 
-                                onClick={handleTerminate}
-                                className="flex-1 bg-red-900/50 hover:bg-red-600 text-red-200 hover:text-white border border-red-800 hover:border-transparent py-3 px-4 rounded-lg font-bold flex items-center justify-center gap-2 transition-all"
-                            >
-                                <UserMinus size={18} /> TERMINATE EMPLOYMENT
-                            </button>
-                        </div>
-                        <p className="text-[10px] text-gray-500 mt-4 text-center">
-                            * All administrative actions are logged to the Permanent Record. Use with discretion.
-                        </p>
-                    </div>
+             {/* Admin Actions */}
+             <div className="glass-panel p-6 rounded-2xl mb-8 border border-white/10 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-32 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
+                <h3 className="text-white font-orbitron text-sm tracking-widest mb-4 flex items-center gap-2 relative z-10">
+                    <Shield size={16} className="text-blue-400" /> ADMINISTRATIVE ACTIONS
+                </h3>
+                <div className="flex flex-wrap gap-4 relative z-10">
+                    <button 
+                        onClick={handlePromote}
+                        className="flex-1 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-3 transition-all shadow-lg shadow-blue-900/20 group border border-blue-400/20"
+                    >
+                        <UserPlus size={20} className="group-hover:scale-110 transition-transform" /> 
+                        <span>PROMOTE UNIT</span>
+                    </button>
+                    <button 
+                        onClick={handleTerminate}
+                        className="flex-1 bg-gradient-to-r from-red-900/80 to-red-800/80 hover:from-red-800 hover:to-red-700 text-red-100 hover:text-white border border-red-700/50 py-4 px-6 rounded-xl font-bold flex items-center justify-center gap-3 transition-all group"
+                    >
+                        <UserMinus size={20} className="group-hover:scale-110 transition-transform" /> 
+                        <span>TERMINATE EMPLOYMENT</span>
+                    </button>
                 </div>
             </div>
 
-            {/* Work Logs */}
-            <h2 className="text-2xl font-santa text-white mb-6 flex items-center gap-3">
-                <Clock className="text-gray-400" /> SERVICE RECORD
-            </h2>
-            <div className="space-y-4">
-                {elf.workLogs && elf.workLogs.length > 0 ? (
-                    elf.workLogs.map((log) => (
-                    <div key={log.id} className="bg-black/20 border border-white/5 p-4 rounded-lg flex items-center gap-4">
-                        <div className={`p-3 rounded-full ${
-                            log.pointsEarned > 0 ? 'bg-yellow-500/10 text-yellow-500' : 
-                            log.pointsEarned < 0 ? 'bg-red-500/10 text-red-500' :
-                            'bg-blue-500/10 text-blue-500'
-                        }`}>
-                            {log.pointsEarned > 0 ? <Award size={20} /> : log.pointsEarned < 0 ? <AlertTriangle size={20} /> : <CheckSquare size={20} />}
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex justify-between mb-1">
-                                <h4 className="font-bold text-white">{log.action}</h4>
-                                <span className="text-xs text-gray-500 font-mono">{new Date(log.timestamp).toLocaleDateString()}</span>
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                 {/* Left Column */}
+                 <div className="space-y-6">
+                     {/* Personal Info */}
+                     <section className="glass-panel rounded-2xl p-6 border border-white/10">
+                        <h3 className="text-sm font-bold text-gray-400 mb-4 uppercase tracking-widest font-orbitron flex items-center gap-2">
+                             <Shield size={14} /> Personnel File
+                        </h3>
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-4 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+                                <div className="p-2 rounded-lg bg-blue-500/20 text-blue-400"><Shield size={18} /></div>
+                                <div>
+                                    <p className="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Department</p>
+                                    <p className="text-white font-medium">{elf.department}</p>
+                                </div>
                             </div>
-                            <p className="text-sm text-gray-400">{log.description}</p>
+                            <div className="flex items-center gap-4 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+                                <div className="p-2 rounded-lg bg-purple-500/20 text-purple-400"><Mail size={18} /></div>
+                                <div>
+                                    <p className="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Secure Comms</p>
+                                    <p className="text-white font-medium truncate w-48">{elf.email}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4 p-3 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+                                <div className="p-2 rounded-lg bg-green-500/20 text-green-400"><Calendar size={18} /></div>
+                                <div>
+                                    <p className="text-[10px] uppercase text-gray-500 font-bold tracking-wider">Service Start</p>
+                                    <p className="text-white font-medium">{elf.joinedDate}</p>
+                                </div>
+                            </div>
                         </div>
-                        <div className={`text-xs font-mono font-bold ${log.pointsEarned >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                            {log.pointsEarned > 0 ? '+' : ''}{log.pointsEarned} pts
-                        </div>
-                    </div>
-                ))) : (
-                    <div className="text-center py-12 border-2 border-dashed border-white/10 rounded-xl text-gray-500">
-                        No significant events recorded in current cycle.
-                    </div>
-                )}
-            </div>
+                     </section>
+
+                     {/* Badges */}
+                     <section className="glass-panel rounded-2xl p-6 border border-white/10">
+                         <h3 className="text-sm font-bold text-gray-400 mb-4 uppercase tracking-widest font-orbitron flex items-center gap-2">
+                             <Award size={14} className="text-santa-gold" /> Career Badges
+                         </h3>
+                         <div className="flex flex-wrap gap-2">
+                             {elf.badges && elf.badges.length > 0 ? (
+                                 elf.badges.map((badge: string, i: number) => (
+                                    <div key={i} className="flex items-center gap-2 bg-gradient-to-r from-yellow-900/20 to-yellow-800/20 border border-yellow-700/30 rounded-lg px-3 py-2 text-xs font-bold text-yellow-200 group hover:border-yellow-500/50 transition-colors cursor-help" title={badge}>
+                                        <Award size={12} className="text-santa-gold" /> {badge}
+                                    </div>
+                                 ))
+                             ) : (
+                                 <div className="text-white/30 italic text-xs w-full text-center py-4 border border-dashed border-white/10 rounded-xl">No badges earned yet.</div>
+                             )}
+                         </div>
+                     </section>
+
+                     {/* Clearance */}
+                     <section className="glass-panel rounded-2xl p-6 border border-white/10 bg-gradient-to-b from-white/5 to-transparent">
+                         <div className="flex justify-between items-center mb-4">
+                             <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest font-orbitron flex items-center gap-2">
+                                <Lock size={14} /> Clearance
+                             </h3>
+                             <span className="text-[10px] text-blue-400 font-mono bg-blue-900/30 px-2 py-1 rounded">SECURE</span>
+                         </div>
+                         <div className="flex items-center justify-between bg-black/40 rounded-xl p-4 border border-white/5 shadow-inner">
+                             <div>
+                                 <p className="text-white/40 text-[10px] uppercase tracking-wider font-orbitron">Current Level</p>
+                                 <p className="text-lg font-bold text-white font-santa">{elf.title}</p>
+                             </div>
+                             <div className="h-10 w-10 flex items-center justify-center rounded-full bg-white/5 border border-white/10">
+                                 <span className="text-xl font-bold text-white/20">{elf.level}</span>
+                             </div>
+                         </div>
+                         <p className="text-[10px] text-white/30 mt-4 text-center font-mono">
+                             {nextRank.points !== 'MAX' 
+                                ? `NEXT CLEARANCE AT ${Number(nextRank.points).toLocaleString()} POINTS` 
+                                : "MAXIMUM CLEARANCE ACHIEVED"}
+                         </p>
+                         {nextRank.points !== 'MAX' && (
+                             <div className="w-full bg-white/5 h-1 mt-2 rounded-full overflow-hidden">
+                                 <div 
+                                    className="bg-santa-gold h-full rounded-full transition-all duration-1000" 
+                                    style={{ width: `${Math.min(100, (elf.points || 0) / Number(nextRank.points) * 100)}%` }}
+                                 />
+                             </div>
+                         )}
+                     </section>
+                 </div>
+
+                 {/* Right Column: Work History */}
+                 <div className="lg:col-span-2 glass-panel rounded-2xl p-6 h-fit min-h-[500px] border border-white/10 relative">
+                     <h3 className="text-xl font-santa text-white mb-6 flex items-center gap-3 border-b border-white/5 pb-4">
+                         <Clock className="text-gray-400" /> SERVICE RECORD
+                     </h3>
+                     <div className="space-y-6 relative">
+                        {/* Timeline line */}
+                        <div className="absolute left-[19px] top-2 bottom-2 w-[2px] bg-white/5 rounded-full"></div>
+
+                        {elf.workLogs?.map((log: any) => (
+                            <div key={log.id} className="relative pl-10 group">
+                                <div className={`absolute left-[14px] top-1 w-3 h-3 rounded-full border-2 border-santa-midnight z-10 ${
+                                    log.pointsEarned > 0 ? 'bg-green-500' : 
+                                    log.pointsEarned < 0 ? 'bg-red-500' : 'bg-blue-500'
+                                } group-hover:scale-125 transition-transform shadow-[0_0_10px_rgba(0,0,0,0.5)]`}></div>
+                                
+                                <div className="bg-white/5 hover:bg-white/10 border border-white/5 rounded-xl p-4 transition-all hover:translate-x-1">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <p className="text-sm text-white font-medium leading-relaxed">{log.description}</p>
+                                        <span className={`ml-4 text-xs font-mono font-bold whitespace-nowrap px-2 py-1 rounded bg-black/20 ${
+                                            log.pointsEarned > 0 ? 'text-green-400' : 
+                                            log.pointsEarned < 0 ? 'text-red-400' : 'text-blue-400'
+                                        }`}>
+                                            {log.pointsEarned > 0 ? '+' : ''}{log.pointsEarned} pts
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] text-white/40 font-mono uppercase tracking-widest">{new Date(log.timestamp).toLocaleDateString()}</span>
+                                        <span className="text-[10px] text-white/20">•</span>
+                                        <span className="text-[10px] text-white/40 font-orbitron">{log.action || 'LOG ENTRY'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+
+                        {(!elf.workLogs || elf.workLogs.length === 0) && (
+                             <div className="text-center py-20">
+                                 <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-white/20">
+                                     <CheckSquare size={32} />
+                                 </div>
+                                 <p className="text-white/40 font-santa text-xl">No service records found.</p>
+                             </div>
+                        )}
+                     </div>
+                 </div>
+             </div>
         </div>
     );
 };

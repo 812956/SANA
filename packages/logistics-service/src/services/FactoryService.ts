@@ -8,6 +8,18 @@ export interface Workbench {
     efficiency: number; // multiplier
 }
 
+import prisma from '../config/prisma';
+import axios from 'axios';
+
+interface FactoryState {
+    toysProduced: number;
+    coalStockpiled: number;
+    pendingOrders: number;
+    activeElves: number;
+    sleighBattery: number;
+    workbenches: Workbench[];
+}
+
 interface FactoryState {
     toysProduced: number;
     coalStockpiled: number;
@@ -19,29 +31,77 @@ interface FactoryState {
 
 export class FactoryService {
     private state: FactoryState = {
-        toysProduced: 84320,
-        coalStockpiled: 1200,
-        pendingOrders: 5,
-        activeElves: 450,
+        toysProduced: 0,
+        coalStockpiled: 0,
+        pendingOrders: 0,
+        activeElves: 0,
         sleighBattery: 100,
         workbenches: [
-            { id: 'wb-1', name: 'Alpha Bench', status: 'ASSEMBLING', currentToy: 'Wooden Train', progress: 45, efficiency: 1.2 },
-            { id: 'wb-2', name: 'Beta Bench', status: 'PAINTING', currentToy: 'Dollhouse', progress: 80, efficiency: 0.9 },
-            { id: 'wb-3', name: 'Gamma Bench', status: 'DESIGNING', currentToy: 'Robot Kit', progress: 10, efficiency: 1.5 },
-            { id: 'wb-4', name: 'Delta Bench', status: 'WRAPPING', currentToy: 'Plush Bear', progress: 95, efficiency: 1.0 },
+            { id: 'wb-1', name: 'Alpha Bench', status: 'IDLE', currentToy: null, progress: 0, efficiency: 1.2 },
+            { id: 'wb-2', name: 'Beta Bench', status: 'IDLE', currentToy: null, progress: 0, efficiency: 0.9 },
+            { id: 'wb-3', name: 'Gamma Bench', status: 'IDLE', currentToy: null, progress: 0, efficiency: 1.5 },
+            { id: 'wb-4', name: 'Delta Bench', status: 'IDLE', currentToy: null, progress: 0, efficiency: 1.0 },
         ]
     };
+    
+    // Store online elf IDs
+    private onlineElfIds: Set<string> = new Set();
+    private factoryStatsId: string | null = null;
+    private toysNeeded: number = 0;
 
     constructor() {
+        this.init();
         // Start simulation loop
         setInterval(() => this.tick(), 1000);
+        // Sync Demand Loop
+        setInterval(() => this.syncDemand(), 5000);
+    }
+
+    private async init() {
+        // Find or create initial stats
+        const stats = await prisma.factoryStats.findFirst();
+        if (stats) {
+            this.factoryStatsId = stats.id;
+            this.state.toysProduced = stats.toysProduced;
+            this.state.coalStockpiled = stats.coalStockpiled;
+        } else {
+            const newStats = await prisma.factoryStats.create({
+                data: { toysProduced: 0, coalStockpiled: 0 }
+            });
+            this.factoryStatsId = newStats.id;
+            this.state.toysProduced = newStats.toysProduced;
+            this.state.coalStockpiled = newStats.coalStockpiled;
+        }
+        await this.syncDemand();
+    }
+
+    private async syncDemand() {
+        try {
+            // Fetch Global Demand (Unique Children)
+            const res = await axios.get('http://localhost:3001/api/reports/stats');
+            if (res.data && typeof res.data.toysNeeded === 'number') {
+                this.toysNeeded = res.data.toysNeeded;
+            }
+        } catch (error: any) {
+            console.error("Failed to sync toy demand:", error.message || error);
+        }
     }
 
     private tick() {
+        // Update active count
+        this.state.activeElves = this.onlineElfIds.size;
+        
+        // Calculate Real Pending Orders
+        // Pending = Global Demand - Produced. Cannot be negative.
+        this.state.pendingOrders = Math.max(0, this.toysNeeded - this.state.toysProduced);
+
         this.state.workbenches.forEach(wb => {
             if (wb.status === 'IDLE') {
                 if (this.state.pendingOrders > 0) {
-                    this.state.pendingOrders--;
+                    // Only start work if we actually need toys
+                    // Optimistic decrement for local state to prevent all benches grabbing same job
+                    // Real consistency check happens on completion loop ideally, but this is fine for simulation
+                    this.state.pendingOrders--; 
                     wb.status = 'DESIGNING';
                     wb.currentToy = this.getRandomToy();
                     wb.progress = 0;
@@ -55,7 +115,9 @@ export class FactoryService {
         });
     }
 
-    private advanceStage(wb: Workbench) {
+    // ... (rest of tick logic helpers)
+
+    private async advanceStage(wb: Workbench) {
         wb.progress = 0;
         switch (wb.status) {
             case 'DESIGNING': wb.status = 'ASSEMBLING'; break;
@@ -65,9 +127,23 @@ export class FactoryService {
             case 'WRAPPING': 
                 wb.status = 'IDLE'; 
                 wb.currentToy = null;
-                this.state.toysProduced++;
+                // Increment Persistent State
+                await this.incrementProduction();
                 break;
             default: wb.status = 'IDLE';
+        }
+    }
+
+    private async incrementProduction() {
+        this.state.toysProduced++;
+        // Sync to DB
+        if (this.factoryStatsId) {
+            await prisma.factoryStats.update({
+                where: { id: this.factoryStatsId },
+                data: { 
+                    toysProduced: { increment: 1 }
+                }
+            });
         }
     }
 
@@ -76,42 +152,65 @@ export class FactoryService {
         return toys[Math.floor(Math.random() * toys.length)];
     }
 
+    clockIn(elfId: string) {
+        this.onlineElfIds.add(elfId);
+        return { success: true, activeElves: this.onlineElfIds.size };
+    }
+
+    clockOut(elfId: string) {
+        this.onlineElfIds.delete(elfId);
+        return { success: true, activeElves: this.onlineElfIds.size };
+    }
+    
+    getOnlineElves() {
+        return Array.from(this.onlineElfIds);
+    }
+
     getStats() {
         // Simulate battery drain on read
         this.state.sleighBattery = Math.max(0, this.state.sleighBattery - 0.005);
-        return this.state;
+        this.state.activeElves = this.onlineElfIds.size;
+        
+        // Recalculate pending just to be sure for UI
+        const pending = Math.max(0, this.toysNeeded - this.state.toysProduced);
+        
+        return {
+            ...this.state,
+            pendingOrders: pending, // Return real pending calculation
+            onlineElfIds: Array.from(this.onlineElfIds)
+        };
     }
 
     processOrder() {
-        // Legacy Webhook Logic - just adds to pending
-        this.state.pendingOrders++;
+       // No-op or log, since we rely on syncDemand now.
     }
 
     approveOrder() {
-        // Manually trigger a start if needed, or just add more capacity/orders
-        // For now, let's just add to pending orders to fuel the machines
-        this.state.pendingOrders += 5;
-        return { success: true, remaining: this.state.pendingOrders };
+        // Start production manually? 
+        // For now, no-op as we are data driven.
+        return { success: true, message: "Production is automated based on demand." };
     }
 
     // Called by Kafka Consumer
     handleAuthorization(name: string) {
-        console.log(`[Factory] AUTHORIZED PRODUCTION for subject: ${name}`);
-        this.state.pendingOrders++; // Simulate work queue
+       // No-op, we pull from Reports stats
     }
 
     handleCoal(name: string) {
         console.log(`[Factory] Stockpiling Coal for subject: ${name}`);
         this.state.coalStockpiled++;
+        if (this.factoryStatsId) {
+             prisma.factoryStats.update({
+                where: { id: this.factoryStatsId },
+                data: { coalStockpiled: { increment: 1 } }
+            }).catch(console.error);
+        }
     }
 
     handleEvent(event: any) {
-        if (event.requiresToy) {
-            this.handleAuthorization(event.name);
-        } else if (event.type === 'NAUGHTY') {
+        // Just log or handle coal
+        if (event.type === 'NAUGHTY') {
             this.handleCoal(event.name);
-        } else {
-             console.log(`[Factory] Event received for ${event.name}, but no production authorized.`);
         }
     }
 }

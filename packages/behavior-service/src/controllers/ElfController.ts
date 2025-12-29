@@ -33,6 +33,16 @@ export class ElfController {
         }
     }
 
+    async logout(req: Request, res: Response) {
+        try {
+            const { id } = req.body;
+            const profile = await authService.logout(id);
+            res.json(profile);
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
     async getElfById(req: Request, res: Response) {
         try {
             const { id } = req.params;

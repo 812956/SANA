@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Save, Globe } from 'lucide-react';
-import { FestiveModal } from '../../components/FestiveModal';
+import { useAlert } from '../../context/AlertContext';
 
 const CITIES: Record<string, { lat: number; lng: number }> = {
     'London, UK': { lat: 51.5074, lng: -0.1278 },
@@ -28,27 +28,54 @@ export const ElfCreateChild = () => {
         status: 'NICE'
     });
     const [loading, setLoading] = useState(false);
-
-    const [modalState, setModalState] = useState<{isOpen: boolean, title: string, message: string, type: 'success' | 'error'}>({
-        isOpen: false,
-        title: '',
-        message: '',
-        type: 'success'
-    });
+    const { showAlert } = useAlert();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
-        // Basic Geocoding Logic
-        const locationKey = `${formData.city}, ${formData.country}`;
-        const coords = CITIES[locationKey] || CITIES['London, UK']; // Default to London if unknown to avoid NULL Island
+        const locationQuery = `${formData.city}, ${formData.country}`;
+        let coords: { lat: number; lng: number } | null = null;
 
         try {
-             const payload = {
+            // 1. Try Geocoding
+            try {
+                const geoRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationQuery)}`);
+                const geoData = await geoRes.json();
+
+                if (geoData && geoData.length > 0) {
+                    coords = {
+                        lat: parseFloat(geoData[0].lat),
+                        lng: parseFloat(geoData[0].lon)
+                    };
+                }
+            } catch (geoError) {
+                console.warn("OSM Geocoding failed:", geoError);
+            }
+
+            // 2. Fallback to internal list if OSM failed
+            if (!coords) {
+                const staticCoords = CITIES[locationQuery];
+                if (staticCoords) {
+                    coords = staticCoords;
+                }
+            }
+
+            // 3. Strict Validation: If we still don't have coords, FAIL.
+            if (!coords) {
+                showAlert({
+                    title: 'LOCATION NOT FOUND',
+                    message: `Unable to locate "${locationQuery}". Please check the spelling or try a major nearby city.`,
+                    type: 'error'
+                });
+                setLoading(false);
+                return; // STOP execution
+            }
+
+            const payload = {
                 ...formData,
                 age: parseInt(formData.age),
-                location: locationKey,
+                location: locationQuery,
                 lat: coords.lat,
                 lng: coords.lng,
                 behaviorScore: formData.status === 'NICE' ? 85 : 35, // Default scores
@@ -62,31 +89,24 @@ export const ElfCreateChild = () => {
             });
 
             if (res.ok) {
-                setModalState({
-                    isOpen: true,
+                showAlert({
                     title: 'REGISTRATION COMPLETE',
-                    message: `Successfully registered ${formData.name} into the Global Child Database. Tracking is now active.`,
-                    type: 'success'
+                    message: `Successfully registered ${formData.name} in ${formData.city}. Coordinates: ${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)}`,
+                    type: 'success',
+                    onAcknowledge: () => navigate('/elf/children')
                 });
             } else {
                 throw new Error('Database rejection');
             }
         } catch (error) {
-            setModalState({
-                isOpen: true,
+            console.error(error);
+            showAlert({
                 title: 'REGISTRATION FAILED',
                 message: 'Could not connect to the mainframe. Please verify network encryption and try again.',
                 type: 'error'
             });
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleModalClose = () => {
-        setModalState(prev => ({ ...prev, isOpen: false }));
-        if (modalState.type === 'success') {
-            navigate('/elf/children');
         }
     };
 
@@ -182,32 +202,11 @@ export const ElfCreateChild = () => {
                 <Globe className="text-santa-green shrink-0 mt-1" size={20} />
                 <div className="text-sm text-santa-green/80">
                     <p className="font-bold text-santa-green mb-1 font-orbitron">GEOSPATIAL SYNC ACTIVE</p>
-                    <p>System will automatically assign coordinates based on City/Country. If exact location is unknown, child will be mapped to nearest regional hub.</p>
+                    <p>System validates coordinates in real-time. Please enter a valid City and Country recognized by the Global Positioning Grid (OSM).</p>
                 </div>
             </div>
 
-            <FestiveModal 
-                isOpen={modalState.isOpen} 
-                onClose={handleModalClose}
-                title={modalState.title}
-                footer={
-                    <button 
-                        onClick={handleModalClose}
-                        className={`px-6 py-2 rounded-lg font-bold text-white transition-colors ${modalState.type === 'success' ? 'bg-santa-green hover:bg-green-600' : 'bg-santa-red hover:bg-red-600'}`}
-                    >
-                        ACKNOWLEDGE
-                    </button>
-                }
-            >
-                <div className="flex items-start gap-4">
-                    <div className={`p-3 rounded-full ${modalState.type === 'success' ? 'bg-santa-green/20 text-santa-green' : 'bg-santa-red/20 text-santa-red'}`}>
-                        {modalState.type === 'success' ? <User size={24} /> : <Globe size={24} />}
-                    </div>
-                    <div>
-                        <p className="text-lg">{modalState.message}</p>
-                    </div>
-                </div>
-            </FestiveModal>
+
         </div>
     );
 };

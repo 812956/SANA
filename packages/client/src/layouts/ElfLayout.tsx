@@ -7,6 +7,28 @@ import { SnowOverlay } from '../components/SnowOverlay';
 export const ElfLayout = () => {
   const navigate = useNavigate();
 
+  const handleLogout = async () => {
+    try {
+      const elfUserStr = localStorage.getItem('elf_user');
+      if (elfUserStr) {
+        const elfUser = JSON.parse(elfUserStr);
+        
+        // Call logout API to update status to OFFLINE
+        await fetch('http://localhost:3001/api/elf/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: elfUser.id })
+        });
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // Clear localStorage and redirect regardless of API call success
+      localStorage.removeItem('elf_user');
+      navigate('/elf/login');
+    }
+  };
+
   return (
     <div className="flex h-screen bg-santa-midnight font-sans text-white overflow-hidden selection:bg-santa-gold/30">
         {/* Festive Sidebar */}
@@ -37,7 +59,7 @@ export const ElfLayout = () => {
              </nav>
 
              <div className="p-4 border-t border-white/10">
-                <button onClick={() => navigate('/elf/login')} className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-white/60 hover:bg-santa-red/20 hover:text-santa-red transition-smooth border border-transparent hover:border-santa-red/30 hover:shadow-glow-red group">
+                <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-white/60 hover:bg-santa-red/20 hover:text-santa-red transition-smooth border border-transparent hover:border-santa-red/30 hover:shadow-glow-red group">
                     <LogOut size={20} className="group-hover:translate-x-1 transition-transform" />
                     <span className="font-medium font-orbitron text-sm">LOGOUT</span>
                 </button>

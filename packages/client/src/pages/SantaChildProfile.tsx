@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MapPin, Smile, Frown, SkipBack, Gift, Activity, Award } from 'lucide-react';
+import { MapPin, Smile, Frown, SkipBack, Gift, Activity, FileText, Calendar } from 'lucide-react';
 import { FestiveLoader } from '../components/FestiveLoader';
 
 export const SantaChildProfile = () => {
@@ -135,20 +135,24 @@ export const SantaChildProfile = () => {
                         </div>
                         <div className="glass-panel p-5 rounded-2xl flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
-                                <Activity size={24} />
+                                <FileText size={24} />
                             </div>
                             <div>
-                                <div className="text-[10px] text-white/40 uppercase tracking-widest font-orbitron">Activity Level</div>
-                                <div className="text-white font-medium">High</div>
+                                <div className="text-[10px] text-white/40 uppercase tracking-widest font-orbitron">Total Records</div>
+                                <div className="text-white font-medium">{child.reports?.length || 0}</div>
                             </div>
                         </div>
                         <div className="glass-panel p-5 rounded-2xl flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400">
-                                <Award size={24} />
+                                <Calendar size={24} />
                             </div>
                             <div>
-                                <div className="text-[10px] text-white/40 uppercase tracking-widest font-orbitron">Achievements</div>
-                                <div className="text-white font-medium">12 Badges</div>
+                                <div className="text-[10px] text-white/40 uppercase tracking-widest font-orbitron">Last Update</div>
+                                <div className="text-white font-medium">
+                                    {child.reports && child.reports.length > 0 
+                                        ? new Date(child.reports[0].timestamp).toLocaleDateString() 
+                                        : "N/A"}
+                                </div>
                             </div>
                         </div>
                     </div>

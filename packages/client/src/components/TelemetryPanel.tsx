@@ -1,15 +1,17 @@
-import { useEffect, useState } from 'react';
+// React imports removed as they are no longer used
 import { Activity, Globe } from 'lucide-react';
+import { useSantaSystem } from '../hooks/useSantaSystem';
 
 export const TelemetryPanel = () => {
-    const [tick, setTick] = useState(0);
+    const { stats } = useSantaSystem();
 
-    useEffect(() => {
-        const interval = setInterval(() => setTick(t => t + 1), 1000);
-        return () => clearInterval(interval);
-    }, []);
+    const niceCount = stats?.niceCount || 0;
+    const naughtyCount = stats?.naughtyCount || 0;
+    const total = niceCount + naughtyCount;
+    const spiritLevel = total > 0 ? (niceCount / total) * 100 : 0;
 
-
+    const activeElves = stats?.activeElves || 0;
+    const toysProduced = stats?.toysProduced || 0;
 
     return (
         <div className="absolute bottom-4 right-4 w-[480px] h-24 glass-panel rounded-xl flex items-center justify-between px-6 z-[1000]">
@@ -17,41 +19,34 @@ export const TelemetryPanel = () => {
             <div className="flex flex-col gap-2 w-1/2 pt-1 border-r border-white/10 pr-4">
                 <div className="text-[10px] text-white/60 flex justify-between items-center font-orbitron">
                     <span className="flex items-center gap-2"><Globe size={12} className="text-santa-gold" /> GLOBAL SPIRIT LEVEL</span>
-                    <span className="text-santa-green font-mono font-bold">94.2%</span>
+                    <span className={`font-mono font-bold ${spiritLevel > 50 ? 'text-santa-green' : 'text-santa-red'}`}>{spiritLevel.toFixed(1)}%</span>
                 </div>
                 
                 {/* Dual Progress Bar */}
                 <div className="relative h-2 bg-white/5 rounded-full overflow-hidden flex shadow-inner">
-                    <div className="h-full bg-santa-green shadow-[0_0_10px_#165B33]" style={{ width: '94.2%' }} />
-                    <div className="h-full bg-santa-red shadow-[0_0_10px_#D42426]" style={{ width: '5.8%' }} />
+                    <div className="h-full bg-santa-green shadow-[0_0_10px_#165B33] transition-all duration-1000" style={{ width: `${spiritLevel}%` }} />
+                    <div className="h-full bg-santa-red shadow-[0_0_10px_#D42426] transition-all duration-1000" style={{ width: `${100 - spiritLevel}%` }} />
                 </div>
                 <div className="flex justify-between text-[9px] font-mono opacity-80">
-                    <span className="text-santa-green">NICE: 4,921,002</span>
-                    <span className="text-santa-red">NAUGHTY: 284,103</span>
+                    <span className="text-santa-green">NICE: {niceCount.toLocaleString()}</span>
+                    <span className="text-santa-red">NAUGHTY: {naughtyCount.toLocaleString()}</span>
                 </div>
             </div>
 
-            {/* Right: Reindeer Vitals */}
-            <div className="flex flex-col gap-1 w-1/2 pl-4 items-end pt-1">
-                <div className="text-[10px] text-white/60 flex items-center gap-2 font-orbitron">
-                    <Activity size={12} className="text-santa-gold animate-pulse" /> REINDEER VITALS
+            {/* Right: Factory Operations */}
+            <div className="flex flex-col gap-1 w-1/2 pl-4 justify-center">
+                <div className="text-[10px] text-white/60 flex items-center gap-2 font-orbitron mb-1">
+                    <Activity size={12} className="text-santa-gold" /> FACTORY OPERATIONS
                 </div>
-                <div className="h-8 w-full border-b border-white/10 bg-black/20 relative overflow-hidden flex items-end gap-0.5 px-1 rounded-sm">
-                     {/* Simulated Equalizer */}
-                     {[...Array(20)].map((_, i) => (
-                        <div 
-                            key={i}
-                            className={`w-1.5 ${Math.random() > 0.5 ? 'bg-santa-gold/60' : 'bg-santa-gold/40'}`}
-                            style={{ 
-                                height: `${30 + Math.random() * 70}%`,
-                                opacity: Math.random() > 0.5 ? 1 : 0.5 
-                            }}
-                        />
-                     ))}
-                </div>
-                <div className="text-[10px] text-santa-gold font-mono flex gap-4">
-                    <span>MACH {((tick % 10) / 10 + 2).toFixed(2)}</span>
-                    <span className="text-santa-green">ENERGY 98%</span>
+                <div className="grid grid-cols-2 gap-2 text-white">
+                    <div>
+                        <div className="text-[9px] text-white/40 uppercase tracking-widest">Active Elves</div>
+                        <div className="font-mono font-bold text-lg text-blue-400">{activeElves.toLocaleString()}</div>
+                    </div>
+                    <div>
+                        <div className="text-[9px] text-white/40 uppercase tracking-widest">Toys Built</div>
+                        <div className="font-mono font-bold text-lg text-yellow-400">{toysProduced.toLocaleString()}</div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -28,6 +28,7 @@ router.post('/elves/:id/terminate', elfController.terminateElf);
 
 // Elf Dashboard Routes (for Elf-specific operations)
 router.post('/elf/login', elfController.login);
+router.post('/elf/logout', elfController.logout);
 router.get('/elf/profile/:id', elfController.getProfile);
 router.get('/elf/children', elfController.getChildren);
 router.get('/elf/children/:id', elfController.getChild);
@@ -39,6 +40,7 @@ router.post('/auth/login', authController.login);
 // Report Routes
 router.get('/events/recent', reportController.getRecentEvents);
 router.post('/reports', upload.single('media'), reportController.createReport);
+router.get('/reports/stats', reportController.getToyDemand);
 
 // AI Routes
 router.post('/ai/command', aiController.processCommand);

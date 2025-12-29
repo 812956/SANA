@@ -86,13 +86,11 @@ export class ChildService {
         if (count > 0) return;
         
         console.log("Seeding Database...");
-        await prisma.child.createMany({
-            data: [
-                { name: "Kevin McAllister", status: "NAUGHTY", behaviorScore: 35, location: "New York, USA", lat: 40.7128, lng: -74.0060, age: 10, city: "New York", country: "USA" },
-                { name: "Charlie Bucket", status: "NICE", behaviorScore: 95, location: "London, UK", lat: 51.5074, lng: -0.1278, age: 11, city: "London", country: "UK" },
-                { name: "Matilda Wormwood", status: "NICE", behaviorScore: 98, location: "Reading, UK", lat: 51.4543, lng: -0.9781, age: 7, city: "Reading", country: "UK" }
-            ]
-        });
+        await Promise.all([
+            prisma.child.create({ data: { name: "Kevin McAllister", status: "NAUGHTY", behaviorScore: 35, location: "New York, USA", lat: 40.7128, lng: -74.0060, age: 10, city: "New York", country: "USA" } }),
+            prisma.child.create({ data: { name: "Charlie Bucket", status: "NICE", behaviorScore: 95, location: "London, UK", lat: 51.5074, lng: -0.1278, age: 11, city: "London", country: "UK" } }),
+            prisma.child.create({ data: { name: "Matilda Wormwood", status: "NICE", behaviorScore: 98, location: "Reading, UK", lat: 51.4543, lng: -0.9781, age: 7, city: "Reading", country: "UK" } })
+        ]);
     }
 }
 

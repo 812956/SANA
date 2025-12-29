@@ -12,10 +12,14 @@ import { ElfProfile } from './pages/elf/ElfProfile';
 import { ElfLoginPage } from './pages/elf/ElfLoginPage';
 import { ElfCreateChild } from './pages/elf/ElfCreateChild';
 import { SantaElfProfile } from './pages/SantaElfProfile';
+import { SantaCreateElf } from './pages/SantaCreateElf';
+import { AlertProvider } from './context/AlertContext';
+import { ProtectedElfRoute } from './components/ProtectedElfRoute';
 
 function App() {
   return (
     <Router>
+      <AlertProvider>
         <Routes>
             {/* Santa Application Routes */}
             <Route path="/" element={<SantaLayout />}>
@@ -24,11 +28,12 @@ function App() {
                 <Route path="children/:id" element={<SantaChildProfile />} />
                 <Route path="logistics" element={<FactoryFloor />} />
                 <Route path="elves" element={<SantaElfDirectory />} />
+                <Route path="elves/create" element={<SantaCreateElf />} />
                 <Route path="elves/:id" element={<SantaElfProfile />} />
             </Route>
 
-            {/* Elf Dashboard Routes */}
-            <Route path="/elf" element={<ElfLayout />}>
+            {/* Elf Dashboard Routes - Protected */}
+            <Route path="/elf" element={<ProtectedElfRoute><ElfLayout /></ProtectedElfRoute>}>
                  <Route index element={<Navigate to="children" replace />} />
                  <Route path="create-child" element={<ElfCreateChild />} />
                  <Route path="children" element={<ElfDatabase />} />
@@ -39,6 +44,7 @@ function App() {
 
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+      </AlertProvider>
     </Router>
   );
 }

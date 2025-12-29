@@ -99,6 +99,20 @@ export class ReportService {
         
         return { success: true, report, child: updatedChild };
     }
+    async getToyDemand() {
+        // Count unique children that have at least one report.
+        // Logic: Distinct childId from Report table.
+        const result = await prisma.report.groupBy({
+            by: ['childId'],
+            _count: {
+                childId: true
+            }
+        });
+        return {
+            toysNeeded: result.length,
+            // Optional: breakdown by type if needed later
+        };
+    }
 }
 
 export const reportService = new ReportService();

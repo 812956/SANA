@@ -9,7 +9,7 @@ export interface Elf {
     password: string;
     points: number;
     badges: string[];
-    status: 'ONLINE' | 'OFFLINE' | 'BUSY' | 'ACTIVE' | 'TERMINATED'; // status in DB is String, usually mapped
+    status: 'ONLINE' | 'OFFLINE' | 'TERMINATED'; // Removed BUSY and ACTIVE
     email?: string; // Not in schema, might be removed or optional
     joinedDate?: string; // Schema has createdAt
     workLogs?: WorkLog[]; // Schema relation
@@ -47,6 +47,9 @@ export interface SantaSystemStats {
     activeElves: number;
     sleighBattery: number;
     workbenches: Workbench[];
+    onlineElfIds: string[];
     serverLoad?: string;
     niceScore?: number;
+    niceCount?: number;
+    naughtyCount?: number;
 }

@@ -50,6 +50,7 @@ export class ElfService {
             prisma.elf.count({ where })
         ]);
 
+
         return {
             data: elves,
             meta: {
@@ -62,13 +63,17 @@ export class ElfService {
     }
 
     async getElfById(id: string) {
-        return prisma.elf.findUnique({
+        const elf = await prisma.elf.findUnique({
             where: { id },
             include: {
-                workLogs: { orderBy: { timestamp: 'desc' } },
+                workLogs: { orderBy: { timestamp: 'desc' }, take: 10 },
                 reports: { orderBy: { timestamp: 'desc' }, take: 10 }
             }
         });
+
+        if (!elf) return null;
+
+        return elf;
     }
 
     async promoteElf(id: string) {
@@ -110,10 +115,24 @@ export class ElfService {
     async awardPoints(elfId: string, points: number, reason: string) {
         console.log(`[GAMIFICATION] Awarded ${points} pts to Elf ${elfId} for: ${reason}`);
         
+        // 1. Get current elf data
+        const elf = await prisma.elf.findUnique({ where: { id: elfId } });
+        if (!elf) throw new Error("Elf not found");
+
+        const newPoints = elf.points + points;
+        
+        // 2. Calculate new Rank & Badges
+        const { level, title } = this.calculateRank(newPoints);
+        const newBadges = this.calculateBadges(newPoints);
+
+        // 3. Update Elf (Atomic update preferred, but logic requires read-modify-write here for Rank)
         await prisma.elf.update({
             where: { id: elfId },
             data: { 
-                points: { increment: points },
+                points: newPoints,
+                level: level,
+                title: title,
+                badges: newBadges, // Overwrites usage of badges, ensuring sync with points
                 workLogs: {
                     create: {
                         action: points > 0 ? "AWARD" : "PENALTY",
@@ -126,8 +145,29 @@ export class ElfService {
         return true;
     }
 
+    private calculateRank(points: number): { level: number; title: string } {
+        if (points >= 5000) return { level: 6, title: "Elder Elf" };
+        if (points >= 2000) return { level: 5, title: "Master Elf" };
+        if (points >= 1000) return { level: 4, title: "Senior Elf" };
+        if (points >= 500) return { level: 3, title: "Mid-Senior Elf" };
+        if (points >= 100) return { level: 2, title: "Junior Elf" };
+        return { level: 1, title: "Apprentice Elf" };
+    }
+
+    private calculateBadges(points: number): string[] {
+        const badges: string[] = [];
+        if (points >= 100) badges.push("Rookie Helper");
+        if (points >= 500) badges.push("Rising Star");
+        if (points >= 1000) badges.push("Top Performer");
+        if (points >= 2000) badges.push("Santa's Right Hand");
+        if (points >= 5000) badges.push("Legendary Elf");
+        return badges;
+    }
+
     async createElf(data: any) {
         // Basic creation - passwords should be hashed in production but plaintext for this demo as per history
+
+
         return prisma.elf.create({
             data: {
                 name: data.name,
@@ -135,7 +175,8 @@ export class ElfService {
                 password: data.password || 'northpole123',
                 title: 'Junior Elf',
                 level: 1,
-                points: 0
+                points: 0,
+                badges: data.badges || []
             }
         });
     }

@@ -1,13 +1,29 @@
 
 import { PrismaClient } from '@prisma/client';
+import type { Server } from 'socket.io';
 
 const prisma = new PrismaClient();
 
+let io: Server | null = null;
+
 export class AuthService {
-    async login(agentId: string, password: string) {
-        const elf = await prisma.elf.findUnique({
-            where: { agentId }
+    // Set the Socket.IO instance
+    setSocketServer(socketServer: Server) {
+        io = socketServer;
+    }
+
+    async login(identifier: string, password: string) {
+        // Try to find elf by agentId first, then by name
+        let elf = await prisma.elf.findUnique({
+            where: { agentId: identifier }
         });
+
+        // If not found by agentId, try finding by name
+        if (!elf) {
+            elf = await prisma.elf.findFirst({
+                where: { name: identifier }
+            });
+        }
 
         if (!elf) {
             throw new Error("Elf not found");
@@ -18,13 +34,44 @@ export class AuthService {
         }
 
         // Update status to ONLINE
-        await prisma.elf.update({
+        const updatedElf = await prisma.elf.update({
             where: { id: elf.id },
             data: { status: "ONLINE", lastActive: new Date() }
         });
 
-        // Return elf profile (excluding password in real scenario, but keeping it simple here)
-        const { password: _, ...profile } = elf;
+        // Emit socket event for real-time status update
+        if (io) {
+            io.emit('elf-status-update', { id: updatedElf.id, status: 'ONLINE' });
+            console.log(`[AuthService] Emitted elf-status-update: ${updatedElf.name} is ONLINE`);
+        }
+
+        // Return elf profile (excluding password)
+        const { password: _, ...profile } = updatedElf;
+        return profile;
+    }
+
+    async logout(elfId: string) {
+        const elf = await prisma.elf.findUnique({
+            where: { id: elfId }
+        });
+
+        if (!elf) {
+            throw new Error("Elf not found");
+        }
+
+        // Update status to OFFLINE
+        const updatedElf = await prisma.elf.update({
+            where: { id: elfId },
+            data: { status: "OFFLINE", lastActive: new Date() }
+        });
+
+        // Emit socket event for real-time status update
+        if (io) {
+            io.emit('elf-status-update', { id: updatedElf.id, status: 'OFFLINE' });
+            console.log(`[AuthService] Emitted elf-status-update: ${updatedElf.name} is OFFLINE`);
+        }
+
+        const { password: _, ...profile } = updatedElf;
         return profile;
     }
 

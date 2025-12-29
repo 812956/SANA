@@ -22,6 +22,14 @@ export class ReportController {
             res.status(500).json({ error: e.message || "Report failed", stack: e.stack });
         }
     }
+    async getToyDemand(req: Request, res: Response) {
+        try {
+            const stats = await reportService.getToyDemand();
+            res.json(stats);
+        } catch (e: any) {
+            res.status(500).json({ error: e.message });
+        }
+    }
 }
 
 export const reportController = new ReportController();

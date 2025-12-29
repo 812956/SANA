@@ -74,7 +74,7 @@ export const ElfLoginPage = () => {
                                 value={agentId}
                                 onChange={(e) => setAgentId(e.target.value)}
                                 className="w-full bg-black/40 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-white placeholder-white/20 focus:outline-none focus:border-santa-gold focus:ring-1 focus:ring-santa-gold transition-all font-mono"
-                                placeholder="e.g. elf1"
+                                placeholder="Name or Agent ID (e.g. Mistletoe or E009)"
                                 required
                             />
                         </div>

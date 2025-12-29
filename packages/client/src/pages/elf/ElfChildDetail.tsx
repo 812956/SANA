@@ -3,10 +3,12 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapPin, Smile, Frown, SkipBack, Send, Camera } from 'lucide-react';
 import { FestiveLoader } from '../../components/FestiveLoader';
+import { useAlert } from '../../context/AlertContext';
 
 export const ElfChildDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { showAlert } = useAlert();
     const [child, setChild] = useState<any>(null);
     const [reportType, setReportType] = useState('NICE');
     const [description, setDescription] = useState('');
@@ -50,11 +52,19 @@ export const ElfChildDetail = () => {
                 // Refresh child data to see new score/history
                 await fetchChild();
                 setDescription('');
-                alert("Report submitted successfully! Points awarded.");
+                showAlert({
+                    title: 'REPORT SUBMITTED',
+                    message: `Observation recorded for ${child.name}. Points have been awarded to your station.`,
+                    type: 'success'
+                });
             }
         } catch (e) {
             console.error(e);
-            alert("Failed to submit report");
+            showAlert({
+                title: 'SUBMISSION FAILED',
+                message: 'Could not transmit report to North Pole mainframe. Please check your connection.',
+                type: 'error'
+            });
         } finally {
             setSubmitting(false);
         }
