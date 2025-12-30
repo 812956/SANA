@@ -222,6 +222,8 @@ Create `.env` files in the following locations:
 ```env
 DATABASE_URL="postgresql://neondb_owner:npg_hYSZTQKLq8M7@ep-little-water-ad2uenv3-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 PORT=3001
+# Optional: Get your key from https://aistudio.google.com/
+# If left empty, the system uses basic regex-based command processing
 GEMINI_API_KEY="your-google-gemini-api-key"
 ```
 
