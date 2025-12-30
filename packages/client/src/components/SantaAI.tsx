@@ -9,8 +9,8 @@ interface AIResponse {
     action?: string | null;
 }
 
-import { useAlert } from '../context/AlertContext';
 import { useSantaAI } from '../context/SantaAIContext';
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 
 // Helper function to retry tool execution with delay
 const executeToolWithRetry = async (
@@ -40,21 +40,18 @@ const executeToolWithRetry = async (
 };
 
 export const SantaAI = () => {
-    const { showAlert } = useAlert();
     const { executeTool } = useSantaAI();
     const [isOpen, setIsOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
-    const [isListening, setIsListening] = useState(false);
-    const [micPermission, setMicPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
+    
+    // Message history
     const [messages, setMessages] = useState<{role: 'user' | 'ai', content: string}[]>([
         { role: 'ai', content: "Ho ho ho! I am SANA, Santa's Advanced Neural Algorithm. How can I help you today?" }
     ]);
+    
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
-    const recognitionRef = useRef<any>(null);
-    const mediaStreamRef = useRef<MediaStream | null>(null);
-    const restartTimeoutRef = useRef<number | null>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -67,7 +64,6 @@ export const SantaAI = () => {
     // Load speech synthesis voices
     useEffect(() => {
         if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-            // Load voices
             window.speechSynthesis.getVoices();
             window.speechSynthesis.onvoiceschanged = () => {
                 window.speechSynthesis.getVoices();
@@ -77,15 +73,12 @@ export const SantaAI = () => {
 
     const speakResponse = (text: string) => {
         if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-            // Cancel any ongoing speech
             window.speechSynthesis.cancel();
-
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.pitch = 0.9; // Lower pitch for Santa
+            utterance.pitch = 0.9;
             utterance.rate = 1.0;
             utterance.volume = 1.0;
             
-            // Try to find a good voice
             const voices = window.speechSynthesis.getVoices();
             const preferredVoice = voices.find(v => 
                 v.name.includes('Google US English') || 
@@ -101,7 +94,8 @@ export const SantaAI = () => {
     const processCommand = async (text: string) => {
         if (!text.trim() || isProcessing) return;
 
-        setQuery('');
+        setQuery(''); // clear input
+        // Only add user message if it wasn't already added (for voice, we add it visually via transcript, but here we enforce consistency)
         setMessages(prev => [...prev, { role: 'user', content: text }]);
         setIsProcessing(true);
 
@@ -130,18 +124,16 @@ export const SantaAI = () => {
                 const params = typeof data.action === 'string' ? JSON.parse(data.action) : data.action;
                 
                 console.log('[SantaAI] Attempting to execute tool:', toolName);
-                console.log('[SantaAI] Tool parameters:', params);
                 
-                // Use retry logic to handle race conditions (especially for voice commands)
+                // Use retry logic to handle race conditions
                 const success = await executeToolWithRetry(executeTool, toolName, params);
                 
                 if (success) {
-                    console.log('[SantaAI] ✅ Tool executed successfully:', toolName);
                     setMessages(prev => [...prev, { role: 'ai', content: `Executing: ${toolName}...` }]);
                 } else {
-                    console.error('[SantaAI] ❌ Tool execution failed:', toolName);
-                    console.error('[SantaAI] Tool not registered on this page');
-                    setMessages(prev => [...prev, { role: 'ai', content: `I'm sorry, the "${toolName}" feature is not available on this page. Try navigating to the map first.` }]);
+                    const fallbackMsg = `I'm sorry, the "${toolName}" feature is not available on this page.`;
+                    setMessages(prev => [...prev, { role: 'ai', content: fallbackMsg }]);
+                    speakResponse(fallbackMsg);
                 }
             } else {
                 setMessages(prev => [...prev, { role: 'ai', content: data.payload }]);
@@ -156,257 +148,31 @@ export const SantaAI = () => {
         }
     };
 
-    // Request microphone permission
-    const requestMicrophonePermission = async (): Promise<boolean> => {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaStreamRef.current = stream;
-            setMicPermission('granted');
-            console.log('✅ Microphone permission granted');
-            return true;
-        } catch (error: any) {
-            console.error('❌ Microphone permission denied:', error);
-            setMicPermission('denied');
+    // Use our new hook
+    const { 
+        isListening, 
+        isSupported, 
+        permissionState, 
+        toggleListening, 
+        stopListening 
+    } = useSpeechRecognition({
+        onResult: (transcript) => {
+            console.log('📝 Voice Command:', transcript);
+            // Immediately stop listening and process
+            stopListening();
+            // We set the query just for visual feedback before processing
+            setQuery(transcript);
             
-            const errorMsg = error.name === 'NotAllowedError' 
-                ? 'Microphone access denied. Please enable microphone permissions in your browser settings.'
-                : 'Unable to access microphone. Please check your device settings.';
-            
+            // Small delay to allow UI to update
+            setTimeout(() => {
+                processCommand(transcript);
+            }, 300);
+        },
+        onError: (errorMsg) => {
             setMessages(prev => [...prev, { role: 'ai', content: `⚠️ ${errorMsg}` }]);
             speakResponse(errorMsg);
-            
-            showAlert({
-                title: 'Microphone Access Required',
-                message: errorMsg,
-                type: 'error'
-            });
-            
-            return false;
         }
-    };
-
-    // Initialize Speech Recognition
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            // Check for secure context (required for some browsers)
-            const isSecureContext = window.isSecureContext || window.location.protocol === 'https:' || window.location.hostname === 'localhost';
-            
-            if (!isSecureContext) {
-                console.warn('⚠️ Speech Recognition requires a secure context (HTTPS or localhost)');
-                return;
-            }
-
-            const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-            
-            if (!SpeechRecognition) {
-                console.warn('⚠️ Speech Recognition not supported in this browser');
-                console.warn('Supported browsers: Chrome, Edge, Safari');
-                return;
-            }
-
-            try {
-                const recognition = new SpeechRecognition();
-                // Use non-continuous mode - more reliable, less prone to network errors
-                recognition.continuous = false;
-                recognition.interimResults = true;
-                recognition.lang = 'en-US';
-                recognition.maxAlternatives = 1;
-
-                let hasShownError = false; // Prevent duplicate errors
-
-                recognition.onstart = () => {
-                    console.log('🎤 Speech recognition started');
-                    setIsListening(true);
-                };
-
-                recognition.onresult = (event: any) => {
-                    let finalTranscript = '';
-                    let interimTranscript = '';
-
-                    for (let i = event.resultIndex; i < event.results.length; ++i) {
-                        const transcript = event.results[i][0].transcript;
-                        if (event.results[i].isFinal) {
-                            finalTranscript += transcript;
-                        } else {
-                            interimTranscript += transcript;
-                        }
-                    }
-
-                    // Show interim results in real-time
-                    if (interimTranscript) {
-                        setQuery(interimTranscript);
-                    }
-
-                    // Process final transcript
-                    if (finalTranscript) {
-                        const cmd = finalTranscript.trim();
-                        console.log('📝 Final transcript:', cmd);
-                        setQuery(cmd);
-                        
-                        // Auto-submit the command
-                        // Recognition will auto-stop in non-continuous mode after final result
-                        // Increased delay to 300ms to ensure tools are registered (handles React Strict Mode double-mounting)
-                        setTimeout(() => {
-                            processCommand(cmd);
-                        }, 300);
-                    }
-                };
-
-                recognition.onerror = (event: any) => {
-                    console.warn('⚠️ Speech recognition error:', event.error);
-                    
-                    // Handle specific errors
-                    if (event.error === 'no-speech') {
-                        console.log('No speech detected');
-                        setIsListening(false);
-                        return;
-                    }
-                    
-                    if (event.error === 'aborted') {
-                        console.log('Recognition aborted (normal stop)');
-                        setIsListening(false);
-                        return;
-                    }
-
-                    // Stop listening on error
-                    setIsListening(false);
-
-                    // Handle network errors - disable voice recognition if it's not working
-                    if (event.error === 'network') {
-                        console.error('⚠️ Network error in speech recognition.');
-                        console.error('The Web Speech API is not available in your environment.');
-                        
-                        // Only show error once and disable the feature
-                        if (!hasShownError) {
-                            setMicPermission('denied'); // Use this to visually disable the mic button
-                            setMessages(prev => [...prev, { 
-                                role: 'ai', 
-                                content: '⚠️ Voice recognition is not available in your browser environment. Please use text chat instead. This is a browser limitation, not a network issue.' 
-                            }]);
-                            hasShownError = true;
-                            
-                            // Disable the recognition object
-                            recognitionRef.current = null;
-                        }
-                        return;
-                    }
-
-                    // Handle other errors
-                    if (!hasShownError) {
-                        let errorMessage = '';
-
-                        if (event.error === 'not-allowed' || event.error === 'permission-denied') {
-                            errorMessage = 'Microphone access denied. Please enable permissions in your browser settings.';
-                            setMicPermission('denied');
-                        } else if (event.error === 'audio-capture') {
-                            errorMessage = 'No microphone detected. Please connect a microphone and try again.';
-                        } else if (event.error === 'service-not-allowed') {
-                            errorMessage = 'Speech recognition service not available in this browser.';
-                        } else {
-                            // Unknown error - log but don't spam user
-                            console.error('Unknown speech recognition error:', event.error);
-                            return;
-                        }
-
-                        if (errorMessage) {
-                            setMessages(prev => [...prev, { role: 'ai', content: `⚠️ ${errorMessage}` }]);
-                            hasShownError = true;
-                        }
-                    }
-                };
-
-                recognition.onend = () => {
-                    console.log('🛑 Speech recognition ended');
-                    setIsListening(false);
-                };
-
-                recognitionRef.current = recognition;
-                console.log('✅ Speech recognition initialized (non-continuous mode)');
-            } catch (error) {
-                console.error('❌ Failed to initialize speech recognition:', error);
-                setMicPermission('denied');
-            }
-        }
-
-        return () => {
-            if (recognitionRef.current) {
-                try { 
-                    recognitionRef.current.abort(); 
-                } catch (e) {
-                    console.error('Error aborting recognition:', e);
-                }
-            }
-            if (restartTimeoutRef.current) {
-                clearTimeout(restartTimeoutRef.current);
-            }
-            if (mediaStreamRef.current) {
-                mediaStreamRef.current.getTracks().forEach(track => track.stop());
-            }
-        };
-    }, []);
-
-    const toggleListening = async () => {
-        if (!recognitionRef.current) {
-            showAlert({
-                title: 'Not Supported',
-                message: 'Speech recognition is not supported in this browser. Please use Chrome or Safari.',
-                type: 'error'
-            });
-            return;
-        }
-
-        if (isListening) {
-            // Stop listening
-            console.log('🛑 Stopping speech recognition');
-            try {
-                recognitionRef.current.stop();
-                if (restartTimeoutRef.current) {
-                    clearTimeout(restartTimeoutRef.current);
-                }
-            } catch (e) {
-                console.error('Error stopping recognition:', e);
-            }
-            setIsListening(false);
-        } else {
-            // Start listening
-            console.log('🎤 Starting speech recognition');
-            
-            // Request microphone permission first
-            if (micPermission !== 'granted') {
-                const granted = await requestMicrophonePermission();
-                if (!granted) return;
-            }
-
-            try {
-                setQuery(''); // Clear previous query
-                recognitionRef.current.start();
-                console.log('✅ Speech recognition started successfully');
-            } catch (e: any) {
-                console.error('❌ Error starting recognition:', e);
-                
-                // Handle "already started" error
-                if (e.message?.includes('already started')) {
-                    try {
-                        recognitionRef.current.stop();
-                        setTimeout(() => {
-                            try {
-                                recognitionRef.current.start();
-                            } catch (retryErr) {
-                                console.error('Retry failed:', retryErr);
-                            }
-                        }, 100);
-                    } catch (stopErr) {
-                        console.error('Stop failed:', stopErr);
-                    }
-                } else {
-                    setMessages(prev => [...prev, { 
-                        role: 'ai', 
-                        content: '⚠️ Failed to start voice recognition. Please try again.' 
-                    }]);
-                }
-            }
-        }
-    };
+    });
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -480,19 +246,19 @@ export const SantaAI = () => {
                             <button
                                 type="button"
                                 onClick={toggleListening}
-                                disabled={isProcessing}
+                                disabled={isProcessing || !isSupported}
                                 className={`relative p-2 rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed ${
                                     isListening 
                                         ? 'bg-santa-red text-white shadow-lg shadow-red-500/50 scale-110' 
-                                        : micPermission === 'denied'
+                                        : permissionState === 'denied'
                                         ? 'bg-red-900/50 text-red-400'
                                         : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
                                 }`}
+                                title={!isSupported ? "Voice not supported in this browser" : "Toggle Voice Command"}
                             >
                                 {isListening ? (
                                     <>
                                         <MicOff size={16} className="relative z-10" />
-                                        {/* Animated pulse rings */}
                                         <span className="absolute inset-0 rounded-lg bg-santa-red animate-ping opacity-75"></span>
                                         <span className="absolute inset-0 rounded-lg bg-santa-red animate-pulse opacity-50"></span>
                                     </>
@@ -507,8 +273,8 @@ export const SantaAI = () => {
                                 placeholder={
                                     isListening 
                                         ? "Listening..." 
-                                        : micPermission === 'denied'
-                                        ? "Microphone access denied - type to chat"
+                                        : permissionState === 'denied'
+                                        ? "Microphone access denied"
                                         : "Ask Santa or navigate..."
                                 }
                                 className={`flex-1 bg-white/5 text-white placeholder-gray-500 text-sm rounded-xl px-4 py-3 border transition-all outline-none ${
@@ -555,15 +321,15 @@ export const SantaAI = () => {
                 ) : (
                     <>
                         <div className="relative z-10">
-                             {/* Santa Hat Overlay */}
-                             <div className="absolute -top-3 -right-2 pointer-events-none transform rotate-12">
+                                {/* Santa Hat Overlay */}
+                                <div className="absolute -top-3 -right-2 pointer-events-none transform rotate-12">
                                 <svg width="32" height="32" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M42.5 35C42.5 37 10 37 7.5 35C5 33 5 28 8 26C11 24 40 24 42 26C44 28 42.5 33 42.5 35Z" fill="white"/>
                                     <path d="M10 26C10 26 15 2 25 2C35 2 40 26 40 26" stroke="#D42426" strokeWidth="20" strokeLinecap="round"/>
                                     <circle cx="44" cy="30" r="5" fill="white"/>
                                 </svg>
-                             </div>
-                             <Bot size={28} />
+                                </div>
+                                <Bot size={28} />
                         </div>
                         <span className="absolute inset-0 rounded-full bg-santa-red animate-ping opacity-20"></span>
                     </>
