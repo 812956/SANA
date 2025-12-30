@@ -103,7 +103,7 @@ export const ElfDatabase = () => {
         <div className="h-full flex flex-col p-8 overflow-hidden">
             <header className="flex justify-between items-center mb-8 shrink-0">
                 <div>
-                    <h1 className="text-4xl font-christmas text-santa-gold mb-2 drop-shadow-md">CHILDREN'S DIRECTORY</h1>
+                    <h1 className="text-4xl font-santa text-santa-gold mb-2 drop-shadow-md">CHILDREN'S DIRECTORY</h1>
                     <p className="text-santa-silver font-mono text-sm tracking-widest uppercase flex items-center gap-2">
                         Global Monitoring System • {total} Children
                     </p>
@@ -210,7 +210,7 @@ export const ElfDatabase = () => {
                             </div>
                             
                             <div className="mb-4 relative z-10">
-                                <div className="text-white font-bold text-lg truncate pr-2 group-hover:text-santa-gold transition-colors font-christmas tracking-wide">{child.name}</div>
+                                <div className="text-white font-bold text-lg truncate pr-2 group-hover:text-santa-gold transition-colors font-santa tracking-wide">{child.name}</div>
                                 <div className="text-santa-silver/70 text-xs font-mono flex items-center gap-1 mt-1">
                                     <MapPin size={10} />
                                     {child.city}, {child.country}

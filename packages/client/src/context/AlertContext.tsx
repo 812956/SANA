@@ -66,34 +66,34 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
     const getStyles = () => {
         switch (config.type) {
             case 'success': return {
-                border: 'border-santa-green/50',
-                text: 'text-santa-green',
-                bg: 'bg-black/95 shadow-santa-green/10',
-                icon: <CheckCircle size={20} className="text-santa-green" />
+                border: 'border-green-500/50',
+                text: 'text-green-400',
+                bg: 'bg-slate-950 shadow-green-900/20',
+                icon: <CheckCircle size={24} className="text-green-400" />
             };
             case 'error': return {
-                border: 'border-santa-red/50',
-                text: 'text-santa-red',
-                bg: 'bg-black/95 shadow-santa-red/10',
-                icon: <AlertTriangle size={20} className="text-santa-red" />
+                border: 'border-red-500/50',
+                text: 'text-red-400',
+                bg: 'bg-slate-950 shadow-red-900/20',
+                icon: <AlertTriangle size={24} className="text-red-400" />
             };
             case 'warning': return {
-                border: 'border-santa-gold/50',
-                text: 'text-santa-gold',
-                bg: 'bg-black/95 shadow-santa-gold/10',
-                icon: <AlertTriangle size={20} className="text-santa-gold" />
+                border: 'border-yellow-500/50',
+                text: 'text-yellow-400',
+                bg: 'bg-slate-950 shadow-yellow-900/20',
+                icon: <AlertTriangle size={24} className="text-yellow-400" />
             };
             case 'confirm': return {
-                border: 'border-white/20',
-                text: 'text-white',
+                border: 'border-slate-700',
+                text: 'text-slate-100',
                 bg: 'bg-slate-900',
-                icon: <Info size={20} className="text-santa-gold" />
+                icon: <Info size={24} className="text-santa-gold" />
             };
             default: return {
-                border: 'border-blue-400/50',
+                border: 'border-blue-500/50',
                 text: 'text-blue-400',
-                bg: 'bg-black/95 shadow-blue-400/10',
-                icon: <Info size={20} className="text-blue-400" />
+                bg: 'bg-slate-950 shadow-blue-900/20',
+                icon: <Info size={24} className="text-blue-400" />
             };
         }
     };

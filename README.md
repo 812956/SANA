@@ -77,11 +77,9 @@ S.A.N.A provides:
 - Coal stockpile monitoring for naughty list management
 
 ### 🤖 **AI Assistant (JARVIS-Style)**
-- Natural language processing powered by Google Gemini AI
-- Voice and text input support
-- Tool registration system for component actions
-- Context-aware responses and command execution
-- Navigate, search, and control the entire system via conversation
+- **Interactive Map Search**: Use voice or text to instantly find and zoom into any child or elf on the global map (e.g., "Find Juneith from India").
+- **Smart Navigation**: seamless routing to different application pages via natural language commands (e.g., "Go to Factory Floor").
+- **Voice & Text Support**: Robust voice recognition and text input for hands-free operation.
 
 ### 📡 **Real-Time Event System**
 - Kafka-based event streaming for inter-service communication
