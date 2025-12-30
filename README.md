@@ -266,8 +266,11 @@ Open your browser and navigate to:
 - **Elf Login**: `http://localhost:5173/elf/login`
 
 **Default Credentials**:
-- **Santa Login**: Use the credentials set during database seeding
-- **Elf Login**: Check the database or use credentials from seeded data
+- **Santa Dashboard**: 
+  - Email: `santa@gmail.com`
+  - Password: `1234`
+- **Elf Dashboard**: 
+  - Login: Use any Name and Password found in the **Elf Directory** listing page (e.g., Naughty Nice).
 
 ---
 
