@@ -120,7 +120,6 @@ S.A.N.A provides:
 ### **DevOps & Tools**
 - **Concurrently** - Run multiple services simultaneously
 - **tsx** - TypeScript execution and watch mode
-- **Docker Compose** - Container orchestration (optional)
 
 ---
 
@@ -202,8 +201,7 @@ S.A.N.A follows a **microservices architecture** with event-driven communication
 ### Prerequisites
 Ensure you have the following installed:
 - **Node.js** (v18 or higher) - [Download](https://nodejs.org/)
-- **PostgreSQL** (v14 or higher) - [Download](https://www.postgresql.org/download/)
-- **Kafka** (Optional - system runs in offline mode without it) - [Download](https://kafka.apache.org/downloads)
+- **PostgreSQL** (Managed via NeonDB or local)
 
 ### Step 1: Clone the Repository
 ```bash
@@ -224,18 +222,16 @@ Create `.env` files in the following locations:
 
 #### `packages/behavior-service/.env`
 ```env
-DATABASE_URL="postgresql://username:password@localhost:5432/sana_db"
+DATABASE_URL="postgresql://neondb_owner:npg_hYSZTQKLq8M7@ep-little-water-ad2uenv3-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 PORT=3001
 GEMINI_API_KEY="your-google-gemini-api-key"
 ```
 
 #### `packages/logistics-service/.env`
 ```env
-DATABASE_URL="postgresql://username:password@localhost:5432/logistics_db"
+DATABASE_URL="postgresql://neondb_owner:npg_hYSZTQKLq8M7@ep-little-water-ad2uenv3-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 PORT=3002
 ```
-
-**Note**: Replace `username`, `password`, and `your-google-gemini-api-key` with your actual credentials.
 
 ### Step 4: Setup Database
 
@@ -332,7 +328,6 @@ sana-monorepo/
 │
 ├── assets/                        # Screenshots and media
 ├── package.json                   # Root package.json (workspaces)
-├── docker-compose.yml             # Docker configuration (optional)
 └── README.md                      # This file
 ```
 
@@ -481,7 +476,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 For questions, issues, or collaboration:
 - **GitHub Issues**: [Create an issue](https://github.com/your-username/sana-monorepo/issues)
-- **Email**: your.email@example.com
+- **Email**: junuchammayil@gmail.com
 
 ---
 
