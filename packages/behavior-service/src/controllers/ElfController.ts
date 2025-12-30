@@ -56,13 +56,14 @@ export class ElfController {
 
     async getElves(req: Request, res: Response) {
         try {
-            const { page, limit, search, level, department } = req.query;
+            const { page, limit, search, level, department, status } = req.query;
             const params = {
                 page: page ? Number(page) : undefined,
                 limit: limit ? Number(limit) : undefined,
                 search: search as string,
                 level: level as string,
-                department: department as string
+                department: department as string,
+                status: status as string
             };
             const result = await elfService.getAllElves(params);
             res.json(result);

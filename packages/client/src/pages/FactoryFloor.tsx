@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Package, AlertTriangle, Users, Settings, Hammer, Clock, UserCheck } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { Package, AlertTriangle, Users, Clock, CheckCircle } from 'lucide-react';
 import { useSantaSystem } from '../hooks/useSantaSystem';
 import { FestiveLoader } from '../components/FestiveLoader';
-import type { Workbench } from '../types';
+import io from 'socket.io-client';
 
 interface Elf {
     id: string;
@@ -10,6 +10,7 @@ interface Elf {
     title: string;
     avatarUrl: string;
     status: string;
+    department: string;
 }
 
 export const FactoryFloor = () => {
@@ -18,6 +19,27 @@ export const FactoryFloor = () => {
     const [onlineElves, setOnlineElves] = useState<Elf[]>([]);
     const [allElves, setAllElves] = useState<Record<string, Elf>>({});
     const [loading, setLoading] = useState(true);
+
+    // Fetch Elf Data
+    const fetchElvesData = async () => {
+        console.log('[FactoryFloor] Fetching elf data from behavior service...');
+        try {
+            const elvesRes = await fetch('http://localhost:3001/api/elves?limit=100');
+            const elvesData = await elvesRes.json();
+            console.log('[FactoryFloor] Received elf data:', elvesData.data?.length, 'elves');
+            const elvesMap: Record<string, Elf> = {};
+            elvesData.data.forEach((e: Elf) => {
+                elvesMap[e.id] = e;
+                if (e.status === 'ONLINE') {
+                    console.log('[FactoryFloor] Online elf found:', e.name, 'Department:', e.department);
+                }
+            });
+            setAllElves(elvesMap);
+            console.log('[FactoryFloor] Updated allElves state with', Object.keys(elvesMap).length, 'elves');
+        } catch (e) {
+            console.error("[FactoryFloor] Failed to fetch elves data", e);
+        }
+    };
 
     // Fetch Behavior Service Data (Toy Demand & Elf Details)
     useEffect(() => {
@@ -28,12 +50,8 @@ export const FactoryFloor = () => {
                 const demandData = await demandRes.json();
                 setToyDemand(demandData.toysNeeded || 0);
 
-                // 2. All Elves (to map IDs to details)
-                const elvesRes = await fetch('http://localhost:3001/api/elves?limit=100');
-                const elvesData = await elvesRes.json();
-                const elvesMap: Record<string, Elf> = {};
-                elvesData.data.forEach((e: Elf) => elvesMap[e.id] = e);
-                setAllElves(elvesMap);
+                // 2. All Elves (to map IDs to details and get Department info)
+                await fetchElvesData();
             } catch (e) {
                 console.error("Failed to fetch behavior data", e);
             } finally {
@@ -42,33 +60,92 @@ export const FactoryFloor = () => {
         };
 
         fetchBehaviorData();
-        // Poll for updates
-        const interval = setInterval(fetchBehaviorData, 5000);
+        // Poll for updates (demand only, elves are real-time via socket)
+        const interval = setInterval(async () => {
+            try {
+                const demandRes = await fetch('http://localhost:3001/api/reports/stats');
+                const demandData = await demandRes.json();
+                setToyDemand(demandData.toysNeeded || 0);
+            } catch (e) {
+                console.error("Failed to fetch demand", e);
+            }
+        }, 5000);
         return () => clearInterval(interval);
     }, []);
 
-    // Resolve Online Elves
+    // Real-time Socket.IO updates for Elf Status
     useEffect(() => {
-        if (stats?.onlineElfIds && Object.keys(allElves).length > 0) {
-            const online = stats.onlineElfIds.map((id: string) => allElves[id]).filter(Boolean);
+        console.log('[FactoryFloor] Setting up Socket.IO connection...');
+        const socket = io('http://localhost:3001', {
+            transports: ['websocket', 'polling'],
+        });
+
+        socket.on('connect', () => {
+            console.log('[FactoryFloor] ✅ Connected to Socket.IO, socket ID:', socket.id);
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('[FactoryFloor] ❌ Socket.IO connection error:', error);
+        });
+
+        socket.on('elf-status-update', (data: { id: string; status: 'ONLINE' | 'OFFLINE' }) => {
+            console.log('[FactoryFloor] 🔔 Elf status update received:', data);
+            console.log('[FactoryFloor] Triggering elf data refetch...');
+            // Immediately refetch elf data to get the latest status
+            fetchElvesData().then(() => {
+                console.log('[FactoryFloor] ✅ Elf data refetch complete');
+            });
+        });
+
+        socket.on('disconnect', () => {
+            console.log('[FactoryFloor] ⚠️ Disconnected from Socket.IO');
+        });
+
+        return () => {
+            console.log('[FactoryFloor] Cleaning up Socket.IO connection');
+            socket.disconnect();
+        };
+    }, []);
+
+    // Resolve Online Elves - Calculate directly from elf status for real-time updates
+    useEffect(() => {
+        if (Object.keys(allElves).length > 0) {
+            // Filter elves by their status field directly (real-time from Socket.IO)
+            const online = Object.values(allElves).filter(elf => elf.status === 'ONLINE');
             setOnlineElves(online);
+            console.log(`[FactoryFloor] Online elves updated: ${online.length} elves online`);
         }
-    }, [stats, allElves]);
+    }, [allElves]);
 
-    const getStatusColor = (status: Workbench['status']) => {
-        switch (status) {
-            case 'DESIGNING': return 'bg-blue-500';
-            case 'ASSEMBLING': return 'bg-yellow-500';
-            case 'PAINTING': return 'bg-purple-500';
-            case 'QA': return 'bg-orange-500';
-            case 'WRAPPING': return 'bg-green-500';
-            default: return 'bg-gray-500';
-        }
-    };
+    // Calculate Department Stats
+    const departmentStats = useMemo(() => {
+        const stats: Record<string, { total: number; online: number; onlineElves: Elf[] }> = {};
+        
+        Object.values(allElves).forEach(elf => {
+            const dept = elf.department || 'General';
+            if (!stats[dept]) {
+                stats[dept] = { total: 0, online: 0, onlineElves: [] };
+            }
+            stats[dept].total++;
+            
+            // Check status directly for real-time updates
+            if (elf.status === 'ONLINE') {
+                stats[dept].online++;
+                stats[dept].onlineElves.push(elf);
+            }
+        });
 
-    if (loading && !toyDemand) {
+        return Object.entries(stats).sort((a, b) => b[1].online - a[1].online);
+    }, [allElves]);
+
+
+    if (loading && !toyDemand && !stats) {
         return <FestiveLoader message="Loading Factory Logistics..." />;
     }
+
+    const toysProduced = stats?.toysProduced || 0;
+    const pendingOrders = Math.max(0, toyDemand - toysProduced);
+    const progressPercent = toyDemand > 0 ? Math.min(100, (toysProduced / toyDemand) * 100) : 100;
 
     return (
         <div className="p-8 h-full overflow-y-auto custom-scrollbar space-y-8">
@@ -85,156 +162,120 @@ export const FactoryFloor = () => {
                 </div>
             </div>
 
-            {/* Top Stats Grid */}
+            {/* PRODUCTION STATS ROW */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* TOY DEMAND */}
-                <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <AlertTriangle size={80} />
-                    </div>
-                    <div className="relative z-10">
-                        <p className="text-santa-silver font-orbitron text-xs tracking-[0.2em] uppercase mb-2">Global Demand</p>
-                        <h2 className="text-5xl font-santa text-white drop-shadow-md">{toyDemand.toLocaleString()}</h2>
-                        <div className="mt-4 flex items-center gap-2 text-sm text-santa-gold">
-                            <span className="bg-santa-gold/20 px-2 py-0.5 rounded text-[10px] font-bold">REQUIRED</span>
-                            <span className="opacity-80">Based on Nice List Reports</span>
+                
+                {/* 1. TOYS NEEDED */}
+                <div className="glass-panel p-8 rounded-2xl relative overflow-hidden flex flex-col justify-between border-t-4 border-santa-gold">
+                   <div>
+                        <div className="flex justify-between items-start mb-2">
+                             <p className="text-santa-silver font-orbitron text-xs tracking-[0.2em] uppercase">Global Demand</p>
+                             <AlertTriangle className="text-santa-gold opacity-50" size={20}/>
                         </div>
+                        <h2 className="text-6xl font-santa text-white">{toyDemand.toLocaleString()}</h2>
+                   </div>
+                   <div className="mt-4 text-xs text-santa-gold/80 font-mono">
+                        TARGET PRODUCTION
+                   </div>
+                </div>
+
+                {/* 2. TOYS DONE */}
+                <div className="glass-panel p-8 rounded-2xl relative overflow-hidden flex flex-col justify-between border-t-4 border-santa-green">
+                   <div>
+                        <div className="flex justify-between items-start mb-2">
+                             <p className="text-santa-silver font-orbitron text-xs tracking-[0.2em] uppercase">Completed</p>
+                             <CheckCircle className="text-santa-green opacity-50" size={20}/>
+                        </div>
+                        <h2 className="text-6xl font-santa text-santa-green">{toysProduced.toLocaleString()}</h2>
+                   </div>
+                   
+                    <div className="mt-4">
+                        <div className="w-full bg-gray-700 h-2 rounded-full overflow-hidden mb-1">
+                            <div className="h-full bg-santa-green" style={{ width: `${progressPercent}%` }} />
+                        </div>
+                        <div className="text-xs text-green-400 font-mono text-right">{Math.round(progressPercent)}% Fulfilled</div>
                     </div>
                 </div>
 
-                {/* TOYS PRODUCED */}
-                <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group border-santa-green/30">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-santa-green">
-                        <Package size={80} />
-                    </div>
-                    <div className="relative z-10">
-                        <p className="text-santa-silver font-orbitron text-xs tracking-[0.2em] uppercase mb-2">Output</p>
-                        <h2 className="text-5xl font-santa text-santa-green drop-shadow-md">{stats?.toysProduced?.toLocaleString() || '---'}</h2>
-                        <div className="mt-4 flex items-center gap-2 text-sm text-green-400">
-                             <div className="w-full bg-gray-700 h-1.5 rounded-full overflow-hidden flex-1 max-w-[100px]">
-                                <div 
-                                    className="h-full bg-santa-green" 
-                                    style={{ width: `${Math.min(100, ((stats?.toysProduced || 0) / (toyDemand || 1)) * 100)}%` }}
-                                />
-                             </div>
-                            <span className="opacity-80">
-                                {toyDemand > 0 ? Math.round(((stats?.toysProduced || 0) / toyDemand) * 100) : 100}% Fulfilled
-                            </span>
+                {/* 3. WORKFORCE TOTAL */}
+                <div className="glass-panel p-8 rounded-2xl relative overflow-hidden flex flex-col justify-between border-t-4 border-santa-red">
+                   <div>
+                        <div className="flex justify-between items-start mb-2">
+                             <p className="text-santa-silver font-orbitron text-xs tracking-[0.2em] uppercase">Active Workforce</p>
+                             <Users className="text-santa-red opacity-50" size={20}/>
                         </div>
-                    </div>
-                </div>
-
-                {/* ACTIVE ELVES */}
-                <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-santa-red">
-                        <Users size={80} />
-                    </div>
-                    <div className="relative z-10">
-                        <p className="text-santa-silver font-orbitron text-xs tracking-[0.2em] uppercase mb-2">Workforce</p>
-                        <h2 className="text-5xl font-santa text-santa-red drop-shadow-md">{stats?.activeElves.toLocaleString() || '---'}</h2>
-                        <div className="mt-4 flex items-center gap-2 text-sm text-santa-red/80">
-                            <Clock size={14} />
-                            <span>Current Shift Active</span>
+                        <div className="flex items-baseline gap-2">
+                            <h2 className="text-6xl font-santa text-santa-red">{onlineElves.length}</h2>
+                            <span className="text-2xl text-white/30 font-santa">/ {Object.keys(allElves).length}</span>
                         </div>
-                    </div>
+                   </div>
+                   <div className="mt-4 text-xs text-santa-red/80 font-mono flex items-center gap-2">
+                        <Clock size={12} />
+                        CURRENTLY CLOCKED IN
+                   </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full min-h-[400px]">
+            {/* DEPARTMENT BREAKDOWN */}
+            <div>
+                 <h2 className="text-2xl font-santa text-white mb-6 flex items-center gap-3">
+                    <Package className="text-santa-silver" /> 
+                    Department Breakdown
+                </h2>
                 
-                {/* PRODUCTION LINES (2/3 width) */}
-                <div className="lg:col-span-2 space-y-6">
-                    <h2 className="text-xl font-santa text-white flex items-center gap-3">
-                        <Settings className="text-santa-silver animate-spin-slow" /> 
-                        ASSEMBLY LINES
-                    </h2>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {stats?.workbenches ? stats.workbenches.map((wb) => (
-                             <div key={wb.id} className="glass-panel p-5 rounded-xl flex flex-col relative overflow-hidden group border border-white/5 hover:border-white/20 transition-colors">
-                                <div className="flex justify-between items-center mb-4">
-                                    <span className="text-xs text-white/50 font-bold tracking-widest font-orbitron">{wb.name.toUpperCase()}</span>
-                                    <span className={`text-[10px] px-2 py-1 rounded-md font-bold text-black shadow-sm ${getStatusColor(wb.status).replace('bg-','bg-opacity-90 bg-')}`}>
-                                        {wb.status}
-                                    </span>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {departmentStats.map(([dept, stat]) => (
+                        <div key={dept} className="glass-panel p-6 rounded-xl border border-white/5 hover:border-white/10 transition-colors">
+                            <div className="flex justify-between items-start mb-6">
+                                <h3 className="text-xl font-bold text-white tracking-wide">{dept}</h3>
+                                <div className={`px-2 py-1 rounded text-[10px] font-bold ${stat.online > 0 ? 'bg-green-500/20 text-green-400' : 'bg-white/5 text-white/40'}`}>
+                                    {stat.online > 0 ? 'ACTIVE' : 'OFFLINE'}
                                 </div>
-                                
-                                <div className="flex-1 flex flex-col justify-center min-h-[80px] z-10">
-                                    {wb.currentToy ? (
-                                        <>
-                                            <div className="text-2xl font-santa text-santa-gold mb-2 truncate">{wb.currentToy}</div>
-                                            <div className="w-full bg-black/40 rounded-full h-3 overflow-hidden border border-white/10 shadow-inner">
-                                                <div 
-                                                    className={`h-full transition-all duration-300 ${getStatusColor(wb.status)} brightness-110 shadow-[0_0_10px_rgba(255,255,255,0.3)]`} 
-                                                    style={{ width: `${wb.progress}%` }}
-                                                />
-                                            </div>
-                                            <div className="flex justify-between mt-1 text-[10px] text-white/40 font-mono">
-                                                <span>0%</span>
-                                                <span>{Math.round(wb.progress)}%</span>
-                                                <span>100%</span>
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div className="text-white/20 flex flex-col items-center justify-center h-full">
-                                            <Hammer size={32} className="mb-2 opacity-50" />
-                                            <span className="text-xs tracking-widest uppercase">Awaiting Task</span>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4 mb-6">
+                                <div className="bg-black/20 rounded-lg p-3">
+                                    <div className="text-xs text-white/40 mb-1">Working</div>
+                                    <div className="text-2xl font-santa text-santa-green">{stat.online}</div>
+                                </div>
+                                <div className="bg-black/20 rounded-lg p-3">
+                                    <div className="text-xs text-white/40 mb-1">Resting</div>
+                                    <div className="text-2xl font-santa text-white/40">{stat.total - stat.online}</div>
+                                </div>
+                            </div>
+
+                            {/* Active Elves Previews */}
+                            {stat.onlineElves.length > 0 && (
+                                <div className="flex -space-x-2 overflow-hidden py-1">
+                                    {stat.onlineElves.slice(0, 5).map(elf => (
+                                        <img 
+                                            key={elf.id}
+                                            src={elf.avatarUrl} 
+                                            alt={elf.name}
+                                            title={elf.name}
+                                            className="inline-block h-8 w-8 rounded-full ring-2 ring-[#1a1c2e] bg-gray-800"
+                                        />
+                                    ))}
+                                    {stat.onlineElves.length > 5 && (
+                                        <div className="flex items-center justify-center h-8 w-8 rounded-full ring-2 ring-[#1a1c2e] bg-gray-700 text-[10px] text-white font-bold">
+                                            +{stat.onlineElves.length - 5}
                                         </div>
                                     )}
                                 </div>
-
-                                 {/* Ambient Glow */}
-                                 <div className={`absolute -bottom-10 -right-10 w-40 h-40 rounded-full blur-3xl opacity-5 pointer-events-none transition-colors duration-500 ${getStatusColor(wb.status)}`} />
-                            </div>
-                        )) : (
-                            [1,2,3,4].map(i => (
-                                <div key={i} className="glass-panel p-4 rounded-xl h-40 animate-pulse bg-white/5" />
-                            ))
-                        )}
-                    </div>
-                </div>
-
-                {/* LIVE ELVES (1/3 width) */}
-                <div className="lg:col-span-1 flex flex-col h-full rounded-2xl glass-panel overflow-hidden border border-white/10">
-                    <div className="p-4 border-b border-white/10 bg-white/5 backdrop-blur-md">
-                        <h2 className="text-xl font-santa text-white flex items-center gap-2">
-                            <UserCheck className="text-santa-green" /> 
-                            LIVE PRESENCE
-                        </h2>
-                    </div>
-                    
-                    <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
-                        {onlineElves.length > 0 ? (
-                            onlineElves.map(elf => (
-                                <div key={elf.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors group cursor-default">
-                                    <div className="relative">
-                                        <img src={elf.avatarUrl} alt={elf.name} className="w-10 h-10 rounded-full border border-white/20 group-hover:border-santa-gold/50 transition-colors" />
-                                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-santa-green rounded-full border-2 border-[#1a1c2e]" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="text-sm font-bold text-white truncate">{elf.name}</div>
-                                        <div className="text-xs text-white/50 truncate">{elf.title}</div>
-                                    </div>
-                                    <div className="text-xs text-santa-green font-mono opacity-0 group-hover:opacity-100 transition-opacity">
-                                        ONLINE
-                                    </div>
+                            )}
+                             {stat.onlineElves.length === 0 && (
+                                <div className="text-xs text-white/20 italic py-2">
+                                    No elves from this department are clocked in.
                                 </div>
-                            ))
-                        ) : (
-                            <div className="h-full flex flex-col items-center justify-center text-white/30 space-y-4 p-8 text-center">
-                                <Users size={48} className="opacity-20" />
-                                <p>No elves currently clocked in.</p>
-                            </div>
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    ))}
                     
-                    {/* Clock In Action (Demo) */}
-                    <div className="p-4 border-t border-white/10 bg-black/20">
-             
-                        <p className="text-[10px] text-center text-white/30 uppercase tracking-widest">
-                            Manager View Only
-                        </p>
-                    </div>
+                    {departmentStats.length === 0 && (
+                        <div className="col-span-full text-center p-12 text-white/30">
+                            Loading Departments...
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

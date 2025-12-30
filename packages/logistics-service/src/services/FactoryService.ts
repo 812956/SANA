@@ -20,15 +20,6 @@ interface FactoryState {
     workbenches: Workbench[];
 }
 
-interface FactoryState {
-    toysProduced: number;
-    coalStockpiled: number;
-    pendingOrders: number;
-    activeElves: number;
-    sleighBattery: number;
-    workbenches: Workbench[];
-}
-
 export class FactoryService {
     private state: FactoryState = {
         toysProduced: 0,
@@ -55,6 +46,8 @@ export class FactoryService {
         setInterval(() => this.tick(), 1000);
         // Sync Demand Loop
         setInterval(() => this.syncDemand(), 5000);
+        // Sync Workforce Loop
+        setInterval(() => this.syncWorkforce(), 5000);
     }
 
     private async init() {
@@ -64,6 +57,7 @@ export class FactoryService {
             this.factoryStatsId = stats.id;
             this.state.toysProduced = stats.toysProduced;
             this.state.coalStockpiled = stats.coalStockpiled;
+            console.log(`[FactoryService] Loaded existing stats: ${JSON.stringify(stats)}`);
         } else {
             const newStats = await prisma.factoryStats.create({
                 data: { toysProduced: 0, coalStockpiled: 0 }
@@ -71,8 +65,10 @@ export class FactoryService {
             this.factoryStatsId = newStats.id;
             this.state.toysProduced = newStats.toysProduced;
             this.state.coalStockpiled = newStats.coalStockpiled;
+            console.log(`[FactoryService] Created new stats: ${JSON.stringify(newStats)}`);
         }
         await this.syncDemand();
+        await this.syncWorkforce();
     }
 
     private async syncDemand() {
@@ -83,7 +79,24 @@ export class FactoryService {
                 this.toysNeeded = res.data.toysNeeded;
             }
         } catch (error: any) {
-            console.error("Failed to sync toy demand:", error.message || error);
+            console.error("Failed to sync toy demand from Behavior Service:", error.message || error);
+        }
+    }
+
+    private async syncWorkforce() {
+        try {
+            // Fetch Online Elves
+            // Note: We use behavior-service port 3001
+            const res = await axios.get('http://localhost:3001/api/elves?status=ONLINE&limit=100');
+            if (res.data && Array.isArray(res.data.data)) {
+                // Replace current set with fresh data from DB
+                const onlineIds = res.data.data.map((e: any) => e.id);
+                this.onlineElfIds = new Set(onlineIds);
+                this.state.activeElves = this.onlineElfIds.size;
+                // console.log(`[FactoryService] Synced Workforce: ${this.state.activeElves} elves online`);
+            }
+        } catch (error: any) {
+            console.error("Failed to sync workforce from Behavior Service:", error.message || error);
         }
     }
 

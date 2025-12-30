@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { Search, MapPin, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { FestiveLoader } from '../../components/FestiveLoader';
+import { useSantaAI } from '../../context/SantaAIContext';
+// import { useNavigate } from 'react-router-dom';
 
 export const ElfChildrenList = () => {
     const [children, setChildren] = useState<any[]>([]);
@@ -10,6 +12,33 @@ export const ElfChildrenList = () => {
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
     const LIMIT = 12;
+
+    const { registerTool, unregisterTool } = useSantaAI();
+
+    // AI Tool Registration
+    useEffect(() => {
+        registerTool('filter_children', (params: any) => {
+            if (params.search) {
+                setSearch(params.search);
+            }
+            // Add other filters if API supports them (e.g. city/country)
+        });
+
+        registerTool('open_profile', (params: any) => {
+             // Find child by name (optimistic) or search
+             // For now, we set search which triggers list update
+             setSearch(params.name);
+             
+             // If we had a mechanism to know the ID immediately we would navigate
+             // But search is async. We can try to automate "click first result" logic?
+             // For now, let's just search.
+        });
+
+        return () => {
+            unregisterTool('filter_children');
+            unregisterTool('open_profile');
+        };
+    }, []);
 
     useEffect(() => {
         setPage(1); // Reset page on search change

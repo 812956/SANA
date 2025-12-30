@@ -4,7 +4,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export class ElfService {
-    async getAllElves(params: { page?: number; limit?: number; search?: string; level?: string; department?: string }) {
+    async getAllElves(params: { page?: number; limit?: number; search?: string; level?: string; department?: string; status?: string }) {
         const page = params.page || 1;
         const limit = params.limit || 10;
         const skip = (page - 1) * limit;
@@ -20,6 +20,10 @@ export class ElfService {
 
         if (params.department && params.department !== 'ALL') {
             where.department = params.department;
+        }
+
+        if (params.status && params.status !== 'ALL') {
+            where.status = params.status;
         }
 
         if (params.level && params.level !== 'ALL') {

@@ -12,7 +12,7 @@ export const MOCK_ELVES: Elf[] = [
         password: 'candy_cane_lane',
         points: 9540,
         badges: ['List Administrator', 'Century of Service', 'Golden Quill'],
-        status: 'ACTIVE',
+        status: 'ONLINE',
         email: 'alabaster.s@northpole.santa',
         joinedDate: '1842-12-01',
         workLogs: [
@@ -31,7 +31,7 @@ export const MOCK_ELVES: Elf[] = [
         password: 'sawdust_glitter',
         points: 8200,
         badges: ['Master Builder', 'Inventor of the Year', 'Woodworking Wizard'],
-        status: 'ACTIVE',
+        status: 'ONLINE',
         email: 'bushy.e@northpole.santa',
         joinedDate: '1905-03-15',
         workLogs: [
@@ -49,7 +49,7 @@ export const MOCK_ELVES: Elf[] = [
         password: 'sleigh_bells_ring',
         points: 6500,
         badges: ['Security Chief', 'Sleigh Guard'],
-        status: 'ACTIVE',
+        status: 'ONLINE',
         email: 'pepper.m@northpole.santa',
         joinedDate: '1945-08-20',
         workLogs: []
@@ -65,7 +65,7 @@ export const MOCK_ELVES: Elf[] = [
         password: 'carrot_crunch',
         points: 5800,
         badges: ['Rudolph Whisperer', 'Stable Master'],
-        status: 'ACTIVE',
+        status: 'ONLINE',
         email: 'shinny.u@northpole.santa',
         joinedDate: '1960-01-10',
         workLogs: []
@@ -81,7 +81,7 @@ export const MOCK_ELVES: Elf[] = [
         password: 'sweet_treats',
         points: 7900,
         badges: ['Head of Sweets', 'Kitchen Commander'],
-        status: 'ACTIVE',
+        status: 'ONLINE',
         email: 'mary.s@northpole.santa',
         joinedDate: '1920-05-05',
         workLogs: []
@@ -97,7 +97,7 @@ export const MOCK_ELVES: Elf[] = [
         password: 'grease_and_gears',
         points: 6100,
         badges: ['Sleigh Designer', 'Aerodynamics Expert'],
-        status: 'ACTIVE',
+        status: 'ONLINE',
         email: 'wunorse.o@northpole.santa',
         joinedDate: '1899-11-23',
         workLogs: []
@@ -113,7 +113,7 @@ export const MOCK_ELVES: Elf[] = [
         password: 'jingle_all_the_way',
         points: 2300,
         badges: ['Data Entry Clerk'],
-        status: 'ACTIVE',
+        status: 'ONLINE',
         email: 'merry.b@northpole.santa',
         joinedDate: '2010-07-12',
         workLogs: []
@@ -129,7 +129,7 @@ export const MOCK_ELVES: Elf[] = [
         password: 'hot_chocolate',
         points: 800,
         badges: ['Rookie of the Month'],
-        status: 'ACTIVE',
+        status: 'ONLINE',
         email: 'cocoa.m@northpole.santa',
         joinedDate: '2023-01-15',
         workLogs: []
@@ -145,7 +145,7 @@ export const MOCK_ELVES: Elf[] = [
         password: 'glittery_hooves',
         points: 2100,
         badges: ['Stall Cleaner'],
-        status: 'ACTIVE',
+        status: 'ONLINE',
         email: 'tinsel.t@northpole.santa',
         joinedDate: '2015-09-30',
         workLogs: []
@@ -177,7 +177,7 @@ export const MOCK_ELVES: Elf[] = [
         password: 'im_an_elf',
         points: 7000,
         badges: ['Spirit Lifter', 'Etch-a-Sketch Master'],
-        status: 'ACTIVE',
+        status: 'ONLINE',
         email: 'buddy.h@northpole.santa',
         joinedDate: '2003-11-07',
         workLogs: []
@@ -193,7 +193,7 @@ export const MOCK_ELVES: Elf[] = [
         password: 'check_it_twice',
         points: 3000,
         badges: ['Detail Oriented'],
-        status: 'ACTIVE',
+        status: 'ONLINE',
         email: 'jobie@northpole.santa',
         joinedDate: '2018-06-21',
         workLogs: []

@@ -3,6 +3,7 @@ import 'leaflet/dist/leaflet.css';
 import { useEffect, useState, useRef } from 'react';
 import L from 'leaflet';
 import { useSantaSystem } from '../hooks/useSantaSystem';
+import { useSantaAI } from '../context/SantaAIContext';
 import { EventConsole } from '../components/EventConsole';
 import { TelemetryPanel } from '../components/TelemetryPanel';
 import { ChildProfileModal } from '../components/ChildProfileModal';
@@ -64,6 +65,60 @@ const MapController = ({ location }: { location: { lat: number, lng: number } | 
             }
         }
     }, [location, map]);
+    
+    // AI Control Integration
+    const { registerTool, unregisterTool } = useSantaAI();
+    
+    useEffect(() => {
+        console.log('[MapController] Component mounted, registering tools...');
+        console.log('[MapController] Map instance:', map ? 'Available' : 'NOT AVAILABLE');
+        
+        registerTool('map_control', (params: any) => {
+            console.log('[MapController] map_control tool called with params:', params);
+            if (params.action === 'ZOOM_IN') {
+                map.zoomIn();
+            } else if (params.action === 'ZOOM_OUT') {
+                map.zoomOut();
+            } else if (params.action === 'PAN') {
+                if (params.lat && params.lng) {
+                     map.flyTo([params.lat, params.lng], params.zoom || 13);
+                }
+            }
+        });
+
+        registerTool('filter_children', async (params: any) => {
+            console.log('[MapController] filter_children tool called with params:', params);
+            if (params.search) {
+                try {
+                    let url = `http://localhost:3001/api/children?search=${encodeURIComponent(params.search)}`;
+                    if (params.city) url += `&city=${encodeURIComponent(params.city)}`;
+                    if (params.country) url += `&country=${encodeURIComponent(params.country)}`;
+
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    const results = Array.isArray(data) ? data : data.data;
+                    
+                    if (results && results.length > 0) {
+                        const target = results[0];
+                        window.dispatchEvent(new CustomEvent('santa-map-locate', { detail: target }));
+                        map.flyTo([target.lat || 51.5074, target.lng || -0.1278], 18, { animate: true, duration: 2 });
+                    } 
+                } catch (e) {
+                    console.error("Search failed", e);
+                }
+            }
+        });
+
+        console.log('[MapController] ✅ Tools registered successfully');
+
+        return () => {
+            console.log('[MapController] Component unmounting, unregistering tools...');
+            unregisterTool('map_control');
+            unregisterTool('filter_children');
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [map]); // Only depend on map instance, not registerTool/unregisterTool
+
     return null;
 };
 
@@ -89,6 +144,26 @@ export const InteractiveMap = () => {
             setTimeout(() => setBlips(prev => prev.filter(b => b.blipId !== blipId)), 5000); // Extended duration 5s
         }
     }, [latestEvent]);
+
+    // Listen for AI Search Events
+    useEffect(() => {
+        const handleLocate = (e: any) => {
+            const child = e.detail;
+            if (child) {
+                 setSelectedChild({
+                    ...child,
+                    id: child.id,
+                    lat: child.lat || 51.5074, 
+                    lng: child.lng || -0.1278,
+                     naughtyScore: child.behaviorScore > 50 ? 20 : 80,
+                     wishlist: child.wishlist || 'Scanning...'
+                 });
+                 setToast({ message: `LOCATED: ${child.name}`, type: 'success' });
+            }
+        };
+        window.addEventListener('santa-map-locate', handleLocate);
+        return () => window.removeEventListener('santa-map-locate', handleLocate);
+    }, []);
 
     // ATOMIC INTERACTION HANDLER
     // Directly uses the event data to set the selected child/target

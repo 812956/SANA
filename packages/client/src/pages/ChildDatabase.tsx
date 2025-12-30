@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { FestiveLoader } from '../components/FestiveLoader';
 import { MapPin, Search, Database } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useSantaAI } from '../context/SantaAIContext';
 
 
 interface Child {
@@ -29,10 +30,22 @@ export const ChildDatabase = () => {
     const [filterCountry, setFilterCountry] = useState<string>('ALL');
     const [filterCity, setFilterCity] = useState<string>('ALL');
 
+    const { registerTool, unregisterTool } = useSantaAI();
+
     useEffect(() => {
-        setPage(1); // Reset page on search change
+        registerTool('filter_children', (params: any) => {
+            if (params.search) setSearchTerm(params.search);
+            if (params.country) setFilterCountry(params.country);
+            if (params.city) setFilterCity(params.city);
+            if (params.status) setFilterStatus(params.status);
+        });
+        return () => unregisterTool('filter_children');
+    }, [registerTool, unregisterTool]);
+
+    useEffect(() => {
+        setPage(1); // Reset page on search or filter change
         fetchChildren(1);
-    }, [searchTerm]);
+    }, [searchTerm, filterStatus, filterCountry, filterCity]);
 
     useEffect(() => {
         fetchChildren(page);
@@ -43,6 +56,9 @@ export const ChildDatabase = () => {
         try {
             const query = new URLSearchParams();
             if (searchTerm) query.append('search', searchTerm);
+            if (filterStatus !== 'ALL') query.append('status', filterStatus);
+            if (filterCountry !== 'ALL') query.append('country', filterCountry);
+            if (filterCity !== 'ALL') query.append('city', filterCity);
             query.append('page', pageNum.toString());
             query.append('limit', LIMIT.toString());
 

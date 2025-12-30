@@ -32,9 +32,14 @@ export const ElfDatabase = () => {
     const [filterCountry, setFilterCountry] = useState<string>('ALL');
     const [filterCity, setFilterCity] = useState<string>('ALL');
 
+    // Reset page when filters change
+    useEffect(() => {
+        setPage(1);
+    }, [searchTerm, filterStatus, filterCountry, filterCity]);
+
     useEffect(() => {
         fetchChildren();
-    }, [page, searchTerm]);
+    }, [page, searchTerm, filterStatus, filterCountry, filterCity]);
 
     const fetchChildren = async () => {
         setLoading(true);
@@ -43,6 +48,9 @@ export const ElfDatabase = () => {
             params.append('page', page.toString());
             params.append('limit', limit.toString());
             if (searchTerm) params.append('search', searchTerm);
+            if (filterStatus !== 'ALL') params.append('status', filterStatus);
+            if (filterCountry !== 'ALL') params.append('country', filterCountry);
+            if (filterCity !== 'ALL') params.append('city', filterCity);
 
             const res = await fetch(`http://localhost:3001/api/elf/children?${params.toString()}`);
             const data = await res.json();

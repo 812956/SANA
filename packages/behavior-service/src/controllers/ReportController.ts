@@ -12,7 +12,7 @@ export class ReportController {
         }
     }
 
-    async createReport(req: Request, res: Response) {
+    async createReport(req: Request & { file?: any }, res: Response) {
         try {
             const result = await reportService.createReport(req.body, req.file);
             res.json(result);

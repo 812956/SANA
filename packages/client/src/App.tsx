@@ -15,14 +15,25 @@ import { SantaElfProfile } from './pages/SantaElfProfile';
 import { SantaCreateElf } from './pages/SantaCreateElf';
 import { AlertProvider } from './context/AlertContext';
 import { ProtectedElfRoute } from './components/ProtectedElfRoute';
+import { ProtectedSantaRoute } from './components/ProtectedSantaRoute';
+import { SantaLoginPage } from './pages/SantaLoginPage';
+
+import { SantaAIProvider } from './context/SantaAIContext';
 
 function App() {
   return (
     <Router>
       <AlertProvider>
-        <Routes>
+        <SantaAIProvider>
+          <Routes>
+            <Route path="/login" element={<SantaLoginPage />} />
+
             {/* Santa Application Routes */}
-            <Route path="/" element={<SantaLayout />}>
+            <Route path="/" element={
+              <ProtectedSantaRoute>
+                <SantaLayout />
+              </ProtectedSantaRoute>
+            }>
                 <Route index element={<InteractiveMap />} />
                 <Route path="database" element={<ChildDatabase />} />
                 <Route path="children/:id" element={<SantaChildProfile />} />
@@ -43,7 +54,8 @@ function App() {
              <Route path="/elf/login" element={<ElfLoginPage />} />
 
             <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+          </Routes>
+        </SantaAIProvider>
       </AlertProvider>
     </Router>
   );

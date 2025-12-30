@@ -1,5 +1,5 @@
-import { NavLink } from 'react-router-dom';
-import { Map, Users, Factory, Rocket } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { Map, Users, Factory, Rocket, LogOut } from 'lucide-react';
 
 const NavItem = ({ to, icon: Icon, label }: { to: string, icon: any, label: string }) => (
   <NavLink 
@@ -18,6 +18,13 @@ const NavItem = ({ to, icon: Icon, label }: { to: string, icon: any, label: stri
 );
 
 export const Sidebar = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('santa_auth');
+    navigate('/login');
+  };
+
   return (
     <aside className="w-64 border-r border-white/10 flex flex-col h-screen shrink-0 glass-panel shadow-glass-lg">
       <div className="p-6 border-b border-white/10 relative overflow-hidden">
@@ -44,6 +51,14 @@ export const Sidebar = () => {
             <Rocket size={16} className="animate-pulse-subtle" />
             <span className="font-orbitron">SLEIGH STATUS: <br/> PRE-FLIGHT CHECK</span>
         </div>
+
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 p-3 rounded-lg text-santa-red hover:bg-santa-red/10 border border-transparent hover:border-santa-red/20 transition-all mt-4 group"
+        >
+          <LogOut size={20} className="group-hover:scale-110 transition-transform" />
+          <span className="font-orbitron tracking-wider text-sm font-bold">LOGOUT</span>
+        </button>
       </div>
     </aside>
   );

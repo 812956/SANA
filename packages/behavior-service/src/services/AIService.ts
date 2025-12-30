@@ -29,16 +29,32 @@ export class AIService {
             Available Routes:
             - / (Command Center / Map)
             - /logistics (Factory Floor)
-            - /children (Database)
-            - /reports (Elf Reports)
+            - /database (Child Database)
+            - /elves (Elf Directory)
             
             User said: "${text}"
             
             Return a JSON object ONLY with no markdown formatting.
-            Structure: { "type": "NAVIGATE" | "SPEAK", "payload": "url or text", "action": "description" }
+            Structure: { "type": "NAVIGATE" | "SPEAK" | "ACTION", "payload": "string", "action": "object/json string" }
             
-            If the user asks to go somewhere, type is NAVIGATE.
-            If the user asks a question, type is SPEAK.
+            INTENT GUIDE:
+            1. NAVIGATION: If user wants to go to a page. 
+               Payload: URL path.
+            
+            2. MAP CONTROL: If user says "zoom in", "zoom out", "go to London", "pan to New York".
+               Type: "ACTION"
+               Payload: "map_control"
+               Action (JSON): { "action": "ZOOM_IN" | "ZOOM_OUT" | "PAN", "lat": number, "lng": number, "zoom": number }
+               (Approximate lat/lng for major cities: London [51.5, -0.1], NY [40.7, -74], North Pole [90, 0])
+               
+            3. LIST FILTER: If user says "search for Timmy", "filter by bad kids", "show me children in London", "Find Junaid from India".
+               Type: "ACTION"
+               Payload: "filter_children"
+               Action (JSON): { "search": "name/term", "city": "city name", "country": "country name", "status": "NICE|NAUGHTY" }
+               Example: "Find Junaid from India" -> { "search": "Junaid", "country": "India" }
+               
+            4. CONVERSATION: General questions.
+                Type: "SPEAK"
             `;
 
             // 2. Call Gemini
@@ -50,20 +66,83 @@ export class AIService {
             const parsed = JSON.parse(cleanText);
 
             if (parsed.type && parsed.payload) {
+                console.log("Gemini API Success:", parsed);
                 return parsed;
             }
         } catch (e) {
             console.error("Gemini API Error (falling back to regex):", e);
         }
 
+        console.log("Using Fallback Logic for:", text);
+
         // --- FALLBACK LOGIC (Regex) ---
         const lowerText = text.toLowerCase();
         
         try {
-             if (lowerText.includes("database") || lowerText.includes("children") || lowerText.includes("list")) {
+            // Greetings
+            if (lowerText.match(/^(hi|hello|hey|greetings|merry christmas|ho ho ho)/)) {
+                 response = {
+                    type: "SPEAK",
+                    payload: "Ho ho ho! Merry Christmas! How can I help you navigate the North Pole today?",
+                    action: null
+                };
+            }
+            // Help / Status
+            else if (lowerText.includes("help") || lowerText.includes("what can you do") || lowerText.includes("status")) {
+                 response = {
+                    type: "SPEAK",
+                    payload: "I can help you find children, check factory stats, or navigate the dashboard. Try saying 'Find Timmy' or 'Go to the factory'.",
+                    action: null
+                };
+            }
+            // Jokes
+            else if (lowerText.includes("joke")) {
+                 response = {
+                    type: "SPEAK",
+                    payload: "Why does Santa go down the chimney? Because it soots him! Ho ho ho!",
+                    action: null
+                };
+            }
+            // Navigation & Commands
+            else if (lowerText.includes("zoom") || lowerText.includes("camera") || lowerText.includes("view")) {
+                // More permissive zoom/map control
+                let action = "ZOOM_IN";
+                if (lowerText.includes("out")) action = "ZOOM_OUT";
+                
+                 response = {
+                    type: "ACTION",
+                    payload: "map_control",
+                    action: JSON.stringify({ action: action })
+                };
+            } else if (lowerText.includes("search") || lowerText.includes("find")) {
+                // Enhanced fallback extraction
+                let term = lowerText.replace("search for", "").replace("find", "").trim();
+                let city = undefined;
+                let country = undefined;
+
+                // Simple "from" extraction (e.g., "Find Junaid from India")
+                if (term.includes(" from ")) {
+                    const parts = term.split(" from ");
+                    term = parts[0].trim();
+                    const location = parts[1].trim();
+                     country = location; 
+                }
+
+                 response = {
+                    type: "ACTION",
+                    payload: "filter_children",
+                    action: JSON.stringify({ search: term, country: country, city: city })
+                };
+            } else if (lowerText.includes("elf") || lowerText.includes("elves")) {
                 response = {
                     type: "NAVIGATE",
-                    payload: "/children",
+                    payload: "/elves",
+                    action: "Opening Elf Directory..."
+                };
+            } else if (lowerText.includes("database") || lowerText.includes("children") || lowerText.includes("list")) {
+                response = {
+                    type: "NAVIGATE",
+                    payload: "/database",
                     action: "Opening Child Database..."
                 };
             } else if (lowerText.includes("report") || lowerText.includes("incident")) {
@@ -81,12 +160,12 @@ export class AIService {
             } else if (lowerText.includes("factory") || lowerText.includes("logistics") || lowerText.includes("toys")) {
                 response = {
                     type: "NAVIGATE",
-                    payload: "/logistics",
+                    payload: "/factory", // Fixed path
                     action: "Connecting to factory floor..."
                 };
             }
         } catch (e) {
-             console.error("AI Error", e);
+             console.error("AI Fallback Error", e);
             response = { type: "SPEAK", payload: "I'm having trouble accessing the mainframe archives.", action: null };
         }
 
